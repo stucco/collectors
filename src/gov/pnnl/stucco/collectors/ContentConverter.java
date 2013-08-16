@@ -74,6 +74,7 @@ public class ContentConverter {
 		jsonSource.put("URL", filename);
 		jsonConverter.put("source", jsonSource);
 		
+		jsonConverter.put("contentType", "text/xml");
 		String encodedContent = encodeContent(content);
 		jsonConverter.put("content", encodedContent);
 	}

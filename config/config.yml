@@ -1,0 +1,36 @@
+default:
+  parallelLimit: 8
+  rabbitmq:
+    host: localhost
+    port: 5672
+    login: guest
+    password: guest
+    vhost: /
+    queue: stucco
+production:
+  lastupdated : siteupdatehistory.hst
+  sites:
+    - 
+      name: NVD - recent
+      url: http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-recent.xml
+      frequency: daily
+    -
+      name: CPE
+      url: http://static.nvd.nist.gov/feeds/xml/cpe/dictionary/official-cpe-dictionary_v2.3.xml
+      frequency: daily
+development:
+  sites:
+    -
+      name: stucco
+      url: http://stucco.github.io/
+      frequency: once
+    -
+      name: ontology
+      url: https://raw.github.com/stucco/ontology/master/stucco_schema.json
+      frequency: once
+replayer :
+  exogenousDir : ./data/downloaded
+  endogenousDir : ./data/testrange
+  outputLog : ./replayer.log
+  outputDir : ./data/Receive
+  
