@@ -1,4 +1,7 @@
 package gov.pnnl.stucco.collectors;
+/**
+ * $OPEN_SOURCE_DISCLAIMER$
+ */
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -41,9 +44,13 @@ public class ContentConverter {
 			convertXML(filename, timestamp, content);
 			msg = jsonConverter.toString();
 		} else if( extension.compareTo("html") == 0) {
-			
+			//TODO:
+	        msg = new String(content);
 		} else if( extension.compareTo("json") == 0) {
-			
+			//TODO:
+	        msg = new String(content);
+		} else {
+		    msg = new String(content);
 		}
 		return msg;
 	}

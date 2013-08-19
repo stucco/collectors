@@ -1,5 +1,7 @@
-package gov.pnnl.stucco.collectors;
-
+package gov.pnnl.stucco.utilities;
+/**
+ * $OPEN_SOURCE_DISCLAIMER$
+ */
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;

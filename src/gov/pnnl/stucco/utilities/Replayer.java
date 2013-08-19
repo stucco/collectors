@@ -1,14 +1,19 @@
-package gov.pnnl.stucco.collectors;
-
+package gov.pnnl.stucco.utilities;
+/**
+ * $OPEN_SOURCE_DISCLAIMER$
+ */
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.yaml.snakeyaml.Yaml;
 
-import gov.pnnl.stucco.collectors.DirectorySender;
+import gov.pnnl.stucco.collectors.*;
 
 /**
  * Replays the various feeds from previously saved exogenous and endogenous data
@@ -16,23 +21,21 @@ import gov.pnnl.stucco.collectors.DirectorySender;
  * @author Shawn Bohn,  August 2013
  *
  */
-
 public class Replayer {
     
-    private DirectorySender exogenous;
-    private DirectorySender endogenous;
+    private ArrayList<Collector> collectors = new ArrayList<Collector>();
     
-    private String exoDir, endDir;
     
     // Constructor
     Replayer( Map<String, Object> configData)
     {
-        Map<String,String> replayerConfig = (Map<String, String>) configData.get("replayer");
-        exoDir = replayerConfig.get("exogenousDir");
-        endDir = replayerConfig.get("endogenousDir");
-        
-        exogenous  = new DirectorySender(new File(exoDir));
-        endogenous = new DirectorySender(new File(endDir));
+        Map<String,Object> replayerConfig = (Map<String, Object>) configData.get("replayer");
+        Collection<Object> collectorConfig = (Collection<Object>) replayerConfig.get("collectors");
+        Iterator<Object> iter = collectorConfig.iterator();
+        for(; iter.hasNext(); ) {
+            Map<String, String> cc = (Map<String,String>)(iter.next());
+            collectors.add(CollectorFactory.makeCollector(cc.get("type"),cc.get("URI")));
+        }
     }
     
     /**
@@ -42,8 +45,9 @@ public class Replayer {
     public void play(String output)
     {
         // TODO: could put these two in separate threads and run at the same time?
-        exogenous.send();
-        //endogenous.send();
+        for(int i=0; i<collectors.size(); i++) {
+            collectors.get(i).collect();
+        }
     }
     
     /**
@@ -63,13 +67,13 @@ public class Replayer {
         try {
             InputStream input = new FileInputStream(new File(configFile.toString()));
             //Object data =  yaml.load(input);
-            Map<String, Object> configData = (Map<String, Object>) yaml.load(input);
+            Map<String, Object> config = (Map<String, Object>) yaml.load(input);
             
-            Map<String, String>replayerMap = (Map<String, String>)(configData.get("replayer"));
+            Map<String, String>replayerMap = (Map<String, String>)(config.get("replayer"));
             String outputDir = replayerMap.get("outputDir");
             
             // get the content and play it
-            Replayer replay = new Replayer(configData);
+            Replayer replay = new Replayer(config);
             replay.play(outputDir);
         } 
         catch (IOException e)  

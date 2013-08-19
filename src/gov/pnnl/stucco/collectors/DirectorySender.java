@@ -1,5 +1,7 @@
 package gov.pnnl.stucco.collectors;
-
+/**
+ * $OPEN_SOURCE_DISCLAIMER$
+ */
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;

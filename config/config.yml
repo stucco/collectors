@@ -29,8 +29,13 @@ development:
       url: https://raw.github.com/stucco/ontology/master/stucco_schema.json
       frequency: once
 replayer :
-  exogenousDir : ./data/downloaded
-  endogenousDir : ./data/testrange
+  collectors:
+    -
+      type: DIRECTORY
+      URI: ./data/Send
+    -
+      type: FILE
+      URI: ./data/downloaded/nvdcve-2.0-modified.xml
   outputLog : ./replayer.log
   outputDir : ./data/Receive
   
