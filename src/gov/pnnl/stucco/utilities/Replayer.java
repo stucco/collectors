@@ -2,6 +2,7 @@ package gov.pnnl.stucco.utilities;
 /**
  * $OPEN_SOURCE_DISCLAIMER$
  */
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -34,7 +35,7 @@ public class Replayer {
         Iterator<Object> iter = collectorConfig.iterator();
         for(; iter.hasNext(); ) {
             Map<String, String> cc = (Map<String,String>)(iter.next());
-            collectors.add(CollectorFactory.makeCollector(cc.get("type"),cc.get("URI")));
+            collectors.add(CollectorFactory.makeCollector(cc.get("type"),cc.get("URI"), configData));
         }
     }
     

@@ -36,6 +36,9 @@ replayer :
     -
       type: FILE
       URI: ./data/downloaded/nvdcve-2.0-modified.xml
+    -
+      type: WEB
+      URI: http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-recent.xml
   outputLog : ./replayer.log
   outputDir : ./data/Receive
   

@@ -6,8 +6,8 @@ package gov.pnnl.stucco.collectors;
 
 public abstract class CollectorAbstractBase implements Collector {
     
-    protected final QueueSender queueSender           = new QueueSender();
-    protected final ContentConverter contentConverter = new ContentConverter();
+    protected final QueueSender m_queueSender           = new QueueSender();
+    protected final ContentConverter m_contentConverter = new ContentConverter();
     
     private int numberOfThreads = 1;
 

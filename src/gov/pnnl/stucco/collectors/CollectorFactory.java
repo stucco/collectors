@@ -1,6 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * $OPEN_SOURCE_DISCLAIMER$
@@ -9,10 +10,10 @@ import java.io.File;
 public class CollectorFactory {
     
     // simple factory approach, will probably want to redo this as we include more collector types
-    public static Collector makeCollector(String collectorType, String src) {
+    public static Collector makeCollector(String collectorType, String src, Map<String, Object> configData) {
         Collector aCollector = null;
         if(collectorType.equals("WEB")) {
-            CollectorWebPageImpl webCollector = new CollectorWebPageImpl();
+            CollectorWebPageImpl webCollector = new CollectorWebPageImpl(src, configData);
             aCollector = webCollector;
         } else if(collectorType.equals("FILE")) {
             CollectorFileImpl fileCollector = new CollectorFileImpl(new File(src));

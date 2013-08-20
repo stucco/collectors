@@ -11,7 +11,7 @@ import java.util.Date;
  */
 
 public class CollectorFileImpl extends CollectorAbstractBase {
- private final static String EOL = System.getProperty("line.separator");
+    private final static String EOL = System.getProperty("line.separator");
     
     /** file from which we are obtaining content*/
     private File m_filename;
@@ -71,7 +71,7 @@ public class CollectorFileImpl extends CollectorAbstractBase {
      * Send the content when requested
      */
     public void send() {
-        queueSender.send(m_msgContent);
+        m_queueSender.send(m_msgContent);
     }
         
     /** 
@@ -115,7 +115,7 @@ public class CollectorFileImpl extends CollectorAbstractBase {
         buffer.append(EOL);
         
         // add the content;  
-        String content = contentConverter.convertContent(URI, rawContent, m_timestamp);
+        String content = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
         buffer.append(content);
         
         m_msgContent = buffer.toString();
