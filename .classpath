@@ -2,9 +2,11 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="C:/Git Local Repositories/collectors/lib/commons-cli-1.1.jar"/>
-	<classpathentry kind="lib" path="C:/Git Local Repositories/collectors/lib/commons-io-1.2.jar"/>
-	<classpathentry kind="lib" path="C:/Git Local Repositories/collectors/lib/rabbitmq-client.jar"/>
-	<classpathentry kind="lib" path="C:/Git Local Repositories/collectors/lib/rabbitmq-client-tests.jar"/>
+	<classpathentry kind="lib" path="./lib/commons-cli-1.1.jar"/>
+	<classpathentry kind="lib" path="./lib/commons-io-1.2.jar"/>
+	<classpathentry kind="lib" path="./lib/rabbitmq-client.jar"/>
+	<classpathentry kind="lib" path="./lib/rabbitmq-client-tests.jar"/>
+	<classpathentry kind="lib" path="./lib/jsonorg.jar"/>
+	<classpathentry kind="lib" path="./lib/snakeyaml-1.12.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
