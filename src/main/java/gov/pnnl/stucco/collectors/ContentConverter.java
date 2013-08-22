@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 
@@ -74,6 +75,8 @@ public class ContentConverter {
 	 * @param content
 	 */
 	private void convertXML(String filename, Date timestamp, String content) {
+	    
+	    try {
 		jsonConverter.put("dateCollected", timestamp.toString());
 		
 		JSONObject jsonSource = new JSONObject();
@@ -84,6 +87,10 @@ public class ContentConverter {
 		jsonConverter.put("contentType", "text/xml");
 		String encodedContent = encodeContent(content);
 		jsonConverter.put("content", encodedContent);
+	    } catch (JSONException e) {
+	        e.printStackTrace();
+	        //TODO: need to resolve this!!!!
+	    }
 	}
 
 	/**

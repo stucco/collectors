@@ -11,7 +11,6 @@ public abstract class CollectorAbstractBase implements Collector {
     
     private int numberOfThreads = 1;
 
-    @Override
     public void setNumberOfThreads(int threadCount) {
         
         // we're only allow the number of threads to be between 1 and 8 (at this time)
@@ -20,7 +19,6 @@ public abstract class CollectorAbstractBase implements Collector {
         }
     }
 
-    @Override
     public void collect() {
         // TODO Auto-generated method stub
         
