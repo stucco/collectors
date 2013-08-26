@@ -13,10 +13,12 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 
 public class FileReceiver {
+  /** RabbitMQ queue name. */
   private final static String QUEUE_NAME = "Test Queue";
 
   private final static String EOL = System.getProperty("line.separator");
 
+  /** Directory in which to write received files. */
   private File directory;
   
   
@@ -38,26 +40,33 @@ public class FileReceiver {
   }
 
   private QueueingConsumer initConsumer() throws IOException {
+    // Create a connection with one channel
     ConnectionFactory factory = new ConnectionFactory();
     factory.setHost("localhost");
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
 
+    // Set up a queue for the channel
     channel.queueDeclare(QUEUE_NAME, false, false, false, null);
     System.out.println(" [*] Waiting for messages. Interrupt to stop.");
 
+    // TODO: Replace this? The RabbitMQ documentation says it's deprecated.
+    // (though it isn't actually tagged with @deprecated.) 
     QueueingConsumer consumer = new QueueingConsumer(channel);
     channel.basicConsume(QUEUE_NAME, true, consumer);
     
     return consumer;
   }
   
+  /** Process received messages until there's an interrupt. */
   private void processMessagesForever(QueueingConsumer consumer) throws InterruptedException {
     while (true) {
+      // Get a message's contents
       String[] messagePart = unwrapMessage(consumer);
       String filename = messagePart[0];
       String content  = messagePart[1];
       
+      // Save the received file
       File f = new File(directory, filename);
       try {
         System.out.println(" [x] Received file '" + filename + "'");
@@ -70,15 +79,18 @@ public class FileReceiver {
     }
   }
 
+  /** Extract the content from a message. */
   private String[] unwrapMessage(QueueingConsumer consumer) throws InterruptedException {
+    // Get a message from a delivery
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-
     String message = new String(delivery.getBody());
     int messageLength = message.length();
 
+    // Extract the filename
     int filenameLength = message.indexOf(EOL);
     String filename = message.substring(0, filenameLength);
 
+    // Extract the content
     int contentStart = filenameLength + EOL.length();
     String content = message.substring(contentStart, messageLength);
     

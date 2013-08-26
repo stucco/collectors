@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import org.yaml.snakeyaml.Yaml;
@@ -24,30 +24,34 @@ import gov.pnnl.stucco.collectors.*;
  */
 public class Replayer {
     
-    private ArrayList<Collector> collectors = new ArrayList<Collector>();
+    private List<Collector> collectors = new ArrayList<Collector>();
+	private String outputDir = "";
     
     
-    // Constructor
-    Replayer( Map<String, Object> configData)
+    @SuppressWarnings("unchecked")
+	Replayer( Map<String, Object> configData)
     {
         Map<String,Object> replayerConfig = (Map<String, Object>) configData.get("replayer");
         Collection<Object> collectorConfig = (Collection<Object>) replayerConfig.get("collectors");
-        Iterator<Object> iter = collectorConfig.iterator();
-        for(; iter.hasNext(); ) {
-            Map<String, String> cc = (Map<String,String>)(iter.next());
+        for(Object obj : collectorConfig) {
+            Map<String, String> cc = (Map<String, String>) obj;
             collectors.add(CollectorFactory.makeCollector(cc.get("type"),cc.get("URI"), configData));
         }
-    }
+        
+        outputDir = (String) replayerConfig.get("outputDir");
+   }
     
     /**
      * replays the content of previous collected dataset
      * @param output - the directory of where content should be written (if specified)
      */
-    public void play(String output)
+    public void play()
     {
-        // TODO: could put these two in separate threads and run at the same time?
-        for(int i=0; i<collectors.size(); i++) {
-            collectors.get(i).collect();
+        // TODO: Use the output dir?
+        
+        // TODO: could put collectors in separate threads and run at the same time?
+        for(Collector c : collectors) {
+            c.collect();
         }
     }
     
@@ -55,10 +59,11 @@ public class Replayer {
      * Main program to replay a downloaded or previously saved forensic data. 
      * @param args
      */
-    static public void main(String[] args) {
+    @SuppressWarnings("unchecked")
+	static public void main(String[] args) {
         
         // we're assuming that the first input arg is the location of the configuration file
-        // gives us the ability to overide with different configurations
+        // gives us the ability to override with different configurations
         String configFile = "./config/config.yml";
         if(args.length > 0) {
             configFile = args[0];
@@ -66,16 +71,12 @@ public class Replayer {
        
         Yaml yaml = new Yaml();
         try {
-            InputStream input = new FileInputStream(new File(configFile.toString()));
-            //Object data =  yaml.load(input);
+            InputStream input = new FileInputStream(new File(configFile));
             Map<String, Object> config = (Map<String, Object>) yaml.load(input);
-            
-            Map<String, String>replayerMap = (Map<String, String>)(config.get("replayer"));
-            String outputDir = replayerMap.get("outputDir");
-            
+                        
             // get the content and play it
             Replayer replay = new Replayer(config);
-            replay.play(outputDir);
+            replay.play();
         } 
         catch (IOException e)  
         {

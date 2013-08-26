@@ -4,6 +4,7 @@ package gov.pnnl.stucco.collectors;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
+/** Abstract base class used in implementing Collectors. */
 public abstract class CollectorAbstractBase implements Collector {
     
     protected final QueueSender m_queueSender           = new QueueSender();
@@ -19,10 +20,5 @@ public abstract class CollectorAbstractBase implements Collector {
         }
     }
 
-    public void collect() {
-        // TODO Auto-generated method stub
-        
-    }
-    
-
+    public abstract void collect();
 }

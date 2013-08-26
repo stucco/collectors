@@ -41,13 +41,13 @@ public class ContentConverter {
 		String extension = extractExtension(filename);
 		
 		// call the appropriate collector converter
-		if(extension.compareTo("xml") == 0) {
+		if (extension.equalsIgnoreCase("xml")) {
 			convertXML(filename, timestamp, content);
 			msg = jsonConverter.toString();
-		} else if( extension.compareTo("html") == 0) {
+		} else if (extension.equalsIgnoreCase("html")) {
 			//TODO:
 	        msg = new String(content);
-		} else if( extension.compareTo("json") == 0) {
+		} else if (extension.equalsIgnoreCase("json")) {
 			//TODO:
 	        msg = new String(content);
 		} else {
