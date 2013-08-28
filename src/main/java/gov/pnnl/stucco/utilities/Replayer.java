@@ -64,7 +64,7 @@ public class Replayer {
         
         // we're assuming that the first input arg is the location of the configuration file
         // gives us the ability to override with different configurations
-        String configFile = "./config/config.yml";
+        String configFile = "./config/data-sources.yml";
         if(args.length > 0) {
             configFile = args[0];
         }
