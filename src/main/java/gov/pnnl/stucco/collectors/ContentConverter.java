@@ -46,12 +46,12 @@ public class ContentConverter {
 			msg = jsonConverter.toString();
 		} else if (extension.equalsIgnoreCase("html")) {
 			//TODO:
-	        msg = new String(content);
+	        msg = content;
 		} else if (extension.equalsIgnoreCase("json")) {
 			//TODO:
-	        msg = new String(content);
+	        msg = content;
 		} else {
-		    msg = new String(content);
+		    msg = content;
 		}
 		return msg;
 	}

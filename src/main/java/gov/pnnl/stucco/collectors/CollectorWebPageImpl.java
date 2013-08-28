@@ -113,8 +113,8 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
           connection.connect();
           
           long contentLength = Long.parseLong(connection.getHeaderField("Content-Length"));
-          m_contentType = new String(connection.getHeaderField("Content-Type"));
-          String timestamp = new String(connection.getHeaderField("Last-Modified"));
+          m_contentType = connection.getHeaderField("Content-Type");
+          String timestamp = connection.getHeaderField("Last-Modified");
           
           // using apache http components there is a easier way to do this conversion but for now we do it this way.
           SimpleDateFormat format = new SimpleDateFormat("EE, dd MMM yyyy HH:mm:ss zzz");
