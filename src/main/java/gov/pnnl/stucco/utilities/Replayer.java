@@ -60,29 +60,12 @@ public class Replayer {
      * @param args
      */
     @SuppressWarnings("unchecked")
-	static public void main(String[] args) {
-        
-        // we're assuming that the first input arg is the location of the configuration file
-        // gives us the ability to override with different configurations
-        String configFile = "./config/data-sources.yml";
-        if(args.length > 0) {
-            configFile = args[0];
-        }
-       
-        Yaml yaml = new Yaml();
-        try {
-            InputStream input = new FileInputStream(new File(configFile));
-            Map<String, Object> config = (Map<String, Object>) yaml.load(input);
-                        
-            // get the content and play it
-            Replayer replay = new Replayer(config);
-            replay.play();
-        } 
-        catch (IOException e)  
-        {
-            System.out.printf("Configuration file %s not found \n", configFile.toString());
-        }
+	static public void main(String[] args) {        
+        Map<String, Object> config = Config.getMap();
 
-      }
+        // get the content and play it
+        Replayer replay = new Replayer(config);
+        replay.play();
+    }
 
 }

@@ -2,10 +2,13 @@ package gov.pnnl.stucco.utilities;
 /**
  * $OPEN_SOURCE_DISCLAIMER$
  */
+import gov.pnnl.stucco.collectors.Config;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Map;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -13,8 +16,8 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 
 public class FileReceiver {
-  /** RabbitMQ queue name. */
-  private final static String QUEUE_NAME = "Test Queue";
+  /** Configuration for RabbitMQ. */
+  private Map<String, Object> rabbitMq;
 
   private final static String EOL = System.getProperty("line.separator");
 
@@ -22,8 +25,13 @@ public class FileReceiver {
   private File directory;
   
   
+  
+  
+  @SuppressWarnings("unchecked")
   public FileReceiver(File dir) {
-    directory = dir;
+      directory = dir;
+      Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap().get("default");
+      rabbitMq = (Map<String, Object>) defaultSection.get("rabbitmq");
   }
   
   public void receive() {
@@ -42,18 +50,20 @@ public class FileReceiver {
   private QueueingConsumer initConsumer() throws IOException {
     // Create a connection with one channel
     ConnectionFactory factory = new ConnectionFactory();
-    factory.setHost("localhost");
+    String host = (String) rabbitMq.get("host");
+    factory.setHost(host);
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
 
     // Set up a queue for the channel
-    channel.queueDeclare(QUEUE_NAME, false, false, false, null);
+    String queueName = (String) rabbitMq.get("queue");
+    channel.queueDeclare(queueName, false, false, false, null);
     System.out.println(" [*] Waiting for messages. Interrupt to stop.");
 
     // TODO: Replace this? The RabbitMQ documentation says it's deprecated.
     // (though it isn't actually tagged with @deprecated.) 
     QueueingConsumer consumer = new QueueingConsumer(channel);
-    channel.basicConsume(QUEUE_NAME, true, consumer);
+    channel.basicConsume(queueName, true, consumer);
     
     return consumer;
   }
@@ -118,7 +128,7 @@ public class FileReceiver {
   }
 
   public static void main(String[] argv) throws Exception {
-    File receiveDir = new File("Receive");
+    File receiveDir = new File("data/Receive");
     FileReceiver receiver = new FileReceiver(receiveDir);
     receiver.receive();
   }
