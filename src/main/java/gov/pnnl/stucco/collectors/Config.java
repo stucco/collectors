@@ -1,6 +1,5 @@
 package gov.pnnl.stucco.collectors;
 
-import gov.pnnl.stucco.utilities.Replayer;
 
 import java.io.File;
 import java.io.FileInputStream;

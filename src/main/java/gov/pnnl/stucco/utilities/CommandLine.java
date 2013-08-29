@@ -406,7 +406,7 @@ public final class CommandLine {
    */
   private void validate() throws UsageException {
     Collection<Switch> all = switchMap.values();
-    for (Switch data : switchMap.values()) {
+    for (Switch data : all) {
       if (data.found) {
         int count = data.valueList.size();
         if (count < data.min || count > data.max) {

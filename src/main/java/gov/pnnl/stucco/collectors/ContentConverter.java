@@ -99,9 +99,7 @@ public class ContentConverter {
 	 * @return - a json value encoded string
 	 */
 	private String encodeContent(String content) {
-		String newContent = new String();
-		newContent = content;
-		newContent.replaceAll("\\\"", "\\\\\"");
+		String newContent = content.replaceAll("\\\"", "\\\\\"");
 		return newContent;
 	}
 	

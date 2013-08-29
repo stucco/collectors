@@ -37,6 +37,46 @@
 	
 	<build>
 	<finalName>${project.artifactId}</finalName>
+	<plugins>
+	<plugin>
+		<groupId>org.dstovall</groupId>
+		<artifactId>onejar-maven-plugin</artifactId>
+		<version>1.4.4</version>
+		<executions>
+			<execution>
+				<id>build-first</id>
+				<configuration>
+					<mainClass>gov.pnnl.stucco.utilities.FileReceiver</mainClass>
+					<attachToBuild>true</attachToBuild>
+					<classifier>onejar</classifier>
+					<filename>file_receiver.jar</filename>
+				</configuration>
+				<goals>
+					<goal>one-jar</goal>
+				</goals>
+			</execution>
+			<execution>
+				<id>build-second</id>
+				<configuration>
+					<mainClass>gov.pnnl.stucco.utilities.Replayer</mainClass>
+					<attachToBuild>true</attachToBuild>
+					<classifier>onejar</classifier>
+					<filename>replayer.jar</filename>
+				</configuration>
+				<goals>
+					<goal>one-jar</goal>
+				</goals>
+			</execution>
+		</executions>
+	</plugin>
+  </plugins>
 	</build>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>onejar-maven-plugin.googlecode.com</id>
+			<url>http://onejar-maven-plugin.googlecode.com/svn/mavenrepo</url>
+		</pluginRepository>
+	</pluginRepositories>
 
 </project>

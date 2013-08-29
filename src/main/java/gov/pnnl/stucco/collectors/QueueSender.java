@@ -15,6 +15,7 @@ public class QueueSender {
     
     
     /** Sets up a sender*/
+    @SuppressWarnings("unchecked")
     public QueueSender() {
         Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap().get("default");
         rabbitMq = (Map<String, Object>) defaultSection.get("rabbitmq");

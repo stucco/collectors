@@ -3,18 +3,14 @@ package gov.pnnl.stucco.utilities;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import gov.pnnl.stucco.collectors.Collector;
+import gov.pnnl.stucco.collectors.CollectorFactory;
+import gov.pnnl.stucco.collectors.Config;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import org.yaml.snakeyaml.Yaml;
-
-import gov.pnnl.stucco.collectors.*;
 
 /**
  * Replays the various feeds from previously saved exogenous and endogenous data
@@ -59,7 +55,6 @@ public class Replayer {
      * Main program to replay a downloaded or previously saved forensic data. 
      * @param args
      */
-    @SuppressWarnings("unchecked")
 	static public void main(String[] args) {        
         Map<String, Object> config = Config.getMap();
 
