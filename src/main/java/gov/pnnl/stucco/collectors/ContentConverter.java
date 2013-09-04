@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
+import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,7 +35,10 @@ public class ContentConverter {
 	 * @param timestamp - the timestamp when the content was retrieved (or loaded)
 	 * @return
 	 */
-	public String convertContent(String filename, String content, Date timestamp) {
+	public String convertContent(String filename, byte[] content, Date timestamp) {
+	    
+	    String base64EncodedContent = DatatypeConverter.printBase64Binary(content);    
+
 		String msg = null;
 		
 		// extract the filename's extension
@@ -42,16 +46,18 @@ public class ContentConverter {
 		
 		// call the appropriate collector converter
 		if (extension.equalsIgnoreCase("xml")) {
-			convertXML(filename, timestamp, content);
+			convertXML(filename, timestamp, base64EncodedContent);
 			msg = jsonConverter.toString();
-		} else if (extension.equalsIgnoreCase("html")) {
-			//TODO:
-	        msg = content;
-		} else if (extension.equalsIgnoreCase("json")) {
-			//TODO:
-	        msg = content;
+//		} else if (extension.equalsIgnoreCase("html")) {
+//			//TODO:
+//	        msg = base64EncodedContent;
+//		} else if (extension.equalsIgnoreCase("json")) {
+//			//TODO:
+//	        msg = base64EncodedContent;
 		} else {
-		    msg = content;
+		    // Default handling of a file
+		    convertXML(filename, timestamp, base64EncodedContent);
+		    msg = jsonConverter.toString();
 		}
 		return msg;
 	}
@@ -59,7 +65,7 @@ public class ContentConverter {
 	/**
 	 * identifies the extension of the form <name.ext>
 	 * @param filename 
-	 * @return - returns the extension of the file
+	 * @return - returns the extension of the file (without the dot)
 	 */
 	private String extractExtension(String filename) {
 		String extension = null;
@@ -68,41 +74,32 @@ public class ContentConverter {
 		return extension;
 	}
 	
+	// TODO: Make timestamp semantics more consistent. Files use collection 
+	// (read) time, while web pages use last modification time.
 	/**
 	 * converts XML content into our JSON format
-	 * @param filename
-	 * @param timestamp
-	 * @param content
+	 * @param filename   Name of file being sent
+	 * @param timestamp  Timestamp for file
+	 * @param base64EncodedContent
 	 */
-	private void convertXML(String filename, Date timestamp, String content) {
+	private void convertXML(String filename, Date timestamp, String base64EncodedContent) {
 	    
 	    try {
-		jsonConverter.put("dateCollected", timestamp.toString());
-		
-		JSONObject jsonSource = new JSONObject();
-		jsonSource.put("name", filename);
-		jsonSource.put("URL", filename);
-		jsonConverter.put("source", jsonSource);
-		
-		jsonConverter.put("contentType", "text/xml");
-		String encodedContent = encodeContent(content);
-		jsonConverter.put("content", encodedContent);
+	        jsonConverter.put("dateCollected", timestamp.toString());
+
+	        JSONObject jsonSource = new JSONObject();
+	        jsonSource.put("name", filename);
+	        jsonSource.put("URL", filename);
+	        jsonConverter.put("source", jsonSource);
+
+	        jsonConverter.put("contentType", "text/xml");
+	        jsonConverter.put("content", base64EncodedContent);
 	    } catch (JSONException e) {
 	        e.printStackTrace();
 	        //TODO: need to resolve this!!!!
 	    }
 	}
-
-	/**
-	 * encodes the content to fit within a json value, this means we're assuming only double quotation marks need to be escaped
-	 * @param content
-	 * @return - a json value encoded string
-	 */
-	private String encodeContent(String content) {
-		String newContent = content.replaceAll("\\\"", "\\\\\"");
-		return newContent;
-	}
-	
+	    
 	// MAIN TEST PROGRAM
 	static public void main(String[] args) throws IOException {
 	    String cwd = System.getProperty("user.dir");
@@ -141,7 +138,8 @@ public class ContentConverter {
 	          }
 	        Date timestamp = new Date();
 	        
-	        String results = contConverter.convertContent(f.getAbsolutePath(), buffer.toString(), timestamp);
+	        byte[] content = buffer.toString().getBytes();
+	        String results = contConverter.convertContent(f.getAbsolutePath(), content, timestamp);
 	        if(results != null) {
 	            System.out.print(results);
 	        } else {

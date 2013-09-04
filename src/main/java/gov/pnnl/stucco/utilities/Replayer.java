@@ -14,13 +14,15 @@ import java.util.Map;
 
 /**
  * Replays the various feeds from previously saved exogenous and endogenous data
- * As specified in the configuration entries.
+ * as specified in the configuration entries.
+ * 
  * @author Shawn Bohn,  August 2013
- *
  */
 public class Replayer {
     
+    /** The Collectors being managed by this Replayer. */
     private List<Collector> collectors = new ArrayList<Collector>();
+    
 	private String outputDir = "";
     
     
@@ -39,7 +41,6 @@ public class Replayer {
     
     /**
      * replays the content of previous collected dataset
-     * @param output - the directory of where content should be written (if specified)
      */
     public void play()
     {
@@ -53,9 +54,9 @@ public class Replayer {
     
     /**
      * Main program to replay a downloaded or previously saved forensic data. 
-     * @param args
      */
-	static public void main(String[] args) {        
+	static public void main(String[] args) {
+	    // Get the configuration data
         Map<String, Object> config = Config.getMap();
 
         // get the content and play it

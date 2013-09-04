@@ -15,8 +15,6 @@ import java.util.Map;
 
 
 public class CollectorWebPageImpl extends CollectorAbstractBase{
-    private final static String EOL = System.getProperty("line.separator");
-    
     /** URI from which we are obtaining content*/
     private String m_URI;
     
@@ -71,20 +69,13 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
      * @return
      */
     public String prepMessage(String URI, String rawContent) {
-        StringBuffer buffer = new StringBuffer();
-        
         // get only the URI pagename
         String[] parts = URI.split("/");
         String uriName = parts[parts.length-1];
         
-        buffer.append(uriName);
-        buffer.append(EOL);
-        
-        // add the content;  
-        String content = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
-        buffer.append(content);
-        
-        m_msgContent = buffer.toString();
+        // add the content; 
+        byte[] byteContent = rawContent.getBytes();
+        m_msgContent = m_contentConverter.convertContent(uriName, byteContent, m_timestamp);
         return m_msgContent;
     }
     

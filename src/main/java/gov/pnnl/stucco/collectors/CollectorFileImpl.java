@@ -1,7 +1,9 @@
 package gov.pnnl.stucco.collectors;
 
 import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
@@ -11,8 +13,6 @@ import java.util.Date;
  */
 
 public class CollectorFileImpl extends CollectorAbstractBase {
-    private final static String EOL = System.getProperty("line.separator");
-    
     /** file from which we are obtaining content*/
     private File m_filename;
     
@@ -20,7 +20,7 @@ public class CollectorFileImpl extends CollectorAbstractBase {
     private String m_msgContent;
     
     /** raw content going into the message */
-    private String m_rawContent;
+    private byte[] m_rawContent;
     
     /** time the data was collected */
     private Date m_timestamp = null;
@@ -49,7 +49,7 @@ public class CollectorFileImpl extends CollectorAbstractBase {
      * the content that was extracted from the source (in this case the file)
      * @return - the contents of the file
      */
-    public String getRawContent() {
+    public byte[] getRawContent() {
         return m_rawContent;
     }
     
@@ -74,31 +74,15 @@ public class CollectorFileImpl extends CollectorAbstractBase {
         m_queueSender.send(m_msgContent);
     }
         
-    /** 
-     * Reads the contents of the file. 
-     * 
-     * @return String consisting of filename + EOL + content
-     */
-    private String readFile(File f) throws IOException {
-      BufferedReader in = null;
-      StringBuffer buffer = new StringBuffer();
-      
-      try {      
-        in = new BufferedReader(new FileReader(f));
-               
-        String line;
-        while ((line = in.readLine()) != null) {
-          buffer.append(line);
-          buffer.append(EOL);
-        }
-      }
-      finally {
-        if (in != null) {
-          in.close();
-        }
-      }
-      
-      return buffer.toString();
+    /** Reads the contents of a file. */
+    public byte[] readFile(File file) throws IOException {
+        int byteCount = (int) file.length();
+        byte [] content = new byte[byteCount];
+        DataInputStream in = new DataInputStream((new FileInputStream(file)));
+        in.readFully(content);
+        in.close();
+        
+        return content;
     }
     
     /**
@@ -107,18 +91,8 @@ public class CollectorFileImpl extends CollectorAbstractBase {
      * @param rawContent
      * @return
      */
-    public String prepMessage(String URI, String rawContent) {
-        StringBuffer buffer = new StringBuffer();
-        
-        // add the filename/URI
-        buffer.append(URI);
-        buffer.append(EOL);
-        
-        // add the content;  
-        String content = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
-        buffer.append(content);
-        
-        m_msgContent = buffer.toString();
+    public String prepMessage(String URI, byte[] rawContent) {
+        m_msgContent = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
         return m_msgContent;
     }
     
