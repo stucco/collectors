@@ -100,9 +100,9 @@ public class FileReceiver {
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
     String message = new String(delivery.getBody());
 
-    try {       
+    try {
+        // Get the JSON fields
         JSONObject json = new JSONObject(message);
-        
         JSONObject source = json.getJSONObject("source");
         String filename = source.getString("name");
         String content = json.getString("content");

@@ -16,57 +16,44 @@ import org.json.JSONObject;
 
 /**
  * takes the content and wraps it for transmission into the STUCCO pipeline
- * @author Shawn Bohn
- *
+ * 
+ * @author Shawn Bohn, August 2013
  */
 
 public class ContentConverter { 
 
-	JSONObject jsonConverter;
-	
 	public ContentConverter() {
-		jsonConverter = new JSONObject();
 	}
 	
 	/**
 	 * converts the content into the correct content message
+	 * 
 	 * @param filename - name of the file the content came from (we need extension)
 	 * @param content - the content of the file
 	 * @param timestamp - the timestamp when the content was retrieved (or loaded)
-	 * @return
+	 * 
+     * @return JSON encoding of the URI and content (which is itself 
+     * base64-encoded within the JSON) 
 	 */
-	public String convertContent(String filename, byte[] content, Date timestamp) {
+	public String convertContent(String filename, byte[] binaryContent, Date timestamp) {
 	    
-	    String base64EncodedContent = DatatypeConverter.printBase64Binary(content);    
-
 		String msg = null;
 		
 		// extract the filename's extension
 		String extension = extractExtension(filename);
 		
+		//TODO: Other source file formats (such as HTML and JSON)
 		// call the appropriate collector converter
 		if (extension.equalsIgnoreCase("xml")) {
-			convertXML(filename, timestamp, base64EncodedContent);
-			msg = jsonConverter.toString();
-//		} else if (extension.equalsIgnoreCase("html")) {
-//			//TODO:
-//	        msg = base64EncodedContent;
-//		} else if (extension.equalsIgnoreCase("json")) {
-//			//TODO:
-//	        msg = base64EncodedContent;
+			msg = convertToJson(filename, timestamp, binaryContent);
 		} else {
 		    // Default handling of a file
-		    convertXML(filename, timestamp, base64EncodedContent);
-		    msg = jsonConverter.toString();
+		    msg = convertToJson(filename, timestamp, binaryContent);
 		}
 		return msg;
 	}
 	
-	/**
-	 * identifies the extension of the form <name.ext>
-	 * @param filename 
-	 * @return - returns the extension of the file (without the dot)
-	 */
+	/** Gets the extension (without dot) from a filename. */
 	private String extractExtension(String filename) {
 		String extension = null;
 		String[] parts = filename.split("\\.");
@@ -77,26 +64,36 @@ public class ContentConverter {
 	// TODO: Make timestamp semantics more consistent. Files use collection 
 	// (read) time, while web pages use last modification time.
 	/**
-	 * converts XML content into our JSON format
-	 * @param filename   Name of file being sent
-	 * @param timestamp  Timestamp for file
-	 * @param base64EncodedContent
+	 * Converts binary content into our JSON format
+	 * 
+	 * @param filename              Name of file being sent
+	 * @param timestamp             Timestamp for file
+	 * @param base64EncodedContent  Byte content of file, encoded as Base64
 	 */
-	private void convertXML(String filename, Date timestamp, String base64EncodedContent) {
+	private String convertToJson(String filename, Date timestamp, byte[] binaryContent) {
 	    
 	    try {
-	        jsonConverter.put("dateCollected", timestamp.toString());
+	        // Convert to Base64
+	        String base64EncodedContent = DatatypeConverter.printBase64Binary(binaryContent);
+	        
+	        // Populate JSON
+	        JSONObject json = new JSONObject();
+	        json.put("dateCollected", timestamp.toString());
 
-	        JSONObject jsonSource = new JSONObject();
-	        jsonSource.put("name", filename);
-	        jsonSource.put("URL", filename);
-	        jsonConverter.put("source", jsonSource);
+	        JSONObject sourceSection = new JSONObject();
+	        sourceSection.put("name", filename);
+	        sourceSection.put("URL", filename);
+	        json.put("source", sourceSection);
 
-	        jsonConverter.put("contentType", "text/xml");
-	        jsonConverter.put("content", base64EncodedContent);
-	    } catch (JSONException e) {
+	        json.put("contentType", "text/xml");
+	        json.put("content", base64EncodedContent);
+	        
+	        return json.toString();
+	    } 
+	    catch (JSONException e) {
 	        e.printStackTrace();
 	        //TODO: need to resolve this!!!!
+	        return "";
 	    }
 	}
 	    

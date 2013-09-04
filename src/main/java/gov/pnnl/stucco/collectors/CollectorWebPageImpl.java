@@ -64,19 +64,21 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
     
     /**
      * Preparing the message we will send into the queue  (TODO: we will likely remove this as it prepends the file name)
-     * @param URI
-     * @param rawContent
-     * @return
+     * @param URI         URI of the web page
+     * @param rawContent  String content of the page
+     * 
+     * @return JSON encoding of the URI and content (which is itself 
+     * base64-encoded within the JSON) 
      */
-    public String prepMessage(String URI, String rawContent) {
+    private String prepMessage(String URI, String rawContent) {
         // get only the URI pagename
         String[] parts = URI.split("/");
         String uriName = parts[parts.length-1];
         
-        // add the content; 
+        // add the content 
         byte[] byteContent = rawContent.getBytes();
-        m_msgContent = m_contentConverter.convertContent(uriName, byteContent, m_timestamp);
-        return m_msgContent;
+        String jsonContent = m_contentConverter.convertContent(uriName, byteContent, m_timestamp);
+        return jsonContent;
     }
     
     /** retrieve the webpage */
