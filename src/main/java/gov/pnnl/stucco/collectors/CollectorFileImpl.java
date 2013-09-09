@@ -1,8 +1,8 @@
 package gov.pnnl.stucco.collectors;
 
-import java.io.BufferedReader;
+import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Date;
 
@@ -11,8 +11,6 @@ import java.util.Date;
  */
 
 public class CollectorFileImpl extends CollectorAbstractBase {
-    private final static String EOL = System.getProperty("line.separator");
-    
     /** file from which we are obtaining content*/
     private File m_filename;
     
@@ -20,7 +18,7 @@ public class CollectorFileImpl extends CollectorAbstractBase {
     private String m_msgContent;
     
     /** raw content going into the message */
-    private String m_rawContent;
+    private byte[] m_rawContent;
     
     /** time the data was collected */
     private Date m_timestamp = null;
@@ -35,27 +33,23 @@ public class CollectorFileImpl extends CollectorAbstractBase {
       m_filename = fname;
     }
     
-    /**
-     * perform the collect on this content type and send the result to the queue
-     */
+    /** Collects the content and sends it to the queue in a message. */
     @Override
     public void collect() {
         collectOnly();
-        m_msgContent = this.prepMessage(m_filename.getName(), getRawContent());
+        m_msgContent = prepMessage(m_filename.getName(), getRawContent());
         send();
     }
     
     /**
-     * the content that was extracted from the source (in this case the file)
-     * @return - the contents of the file
+     * Gets the binary content that was extracted from the source (in this case
+     * the file).
      */
-    public String getRawContent() {
+    public byte[] getRawContent() {
         return m_rawContent;
     }
     
-    /**
-     * Only collect the content the content and retain it for later.
-     */
+    /** Collects the content and retains it for later. */
     public void collectOnly() {
       try {
           // Read the file
@@ -67,66 +61,37 @@ public class CollectorFileImpl extends CollectorAbstractBase {
       }
     }
     
-    /**
-     * Send the content when requested
-     */
+    /** Sends the content. */
     public void send() {
         m_queueSender.send(m_msgContent);
     }
         
-    /** 
-     * Reads the contents of the file. 
-     * 
-     * @return String consisting of filename + EOL + content
-     */
-    private String readFile(File f) throws IOException {
-      BufferedReader in = null;
-      StringBuffer buffer = new StringBuffer();
-      
-      try {      
-        in = new BufferedReader(new FileReader(f));
-               
-        String line;
-        while ((line = in.readLine()) != null) {
-          buffer.append(line);
-          buffer.append(EOL);
-        }
-      }
-      finally {
-        if (in != null) {
-          in.close();
-        }
-      }
-      
-      return buffer.toString();
+    /** Reads the contents of a file. */
+    public byte[] readFile(File file) throws IOException {
+        int byteCount = (int) file.length();
+        byte [] content = new byte[byteCount];
+        DataInputStream in = new DataInputStream((new FileInputStream(file)));
+        in.readFully(content);
+        in.close();
+        
+        return content;
     }
     
     /**
      * Preparing the message we will send into the queue
-     * @param URI
-     * @param rawContent
-     * @return
+     * @param URI         URI of the file
+     * @param rawContent  Byte content of the file
+     * 
+     * @return JSON encoding of the URI and content (which is itself 
+     * base64-encoded within the JSON) 
      */
-    public String prepMessage(String URI, String rawContent) {
-        StringBuffer buffer = new StringBuffer();
-        
-        // add the filename/URI
-        buffer.append(URI);
-        buffer.append(EOL);
-        
-        // add the content;  
-        String content = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
-        buffer.append(content);
-        
-        m_msgContent = buffer.toString();
-        return m_msgContent;
+    private String prepMessage(String URI, byte[] rawContent) {
+        String jsonContent = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
+        return jsonContent;
     }
     
     
-    /**
-     * Main
-     * @param args  -  Requires
-     */
+    /** Small test driver. */
     static public void main(String[] args) {
         try {
             File filename = new File("Send/malwaredomains-domains-short.txt");

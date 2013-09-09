@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Date;
+import javax.xml.bind.DatatypeConverter;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,52 +16,44 @@ import org.json.JSONObject;
 
 /**
  * takes the content and wraps it for transmission into the STUCCO pipeline
- * @author Shawn Bohn
- *
+ * 
+ * @author Shawn Bohn, August 2013
  */
 
 public class ContentConverter { 
 
-	JSONObject jsonConverter;
-	
 	public ContentConverter() {
-		jsonConverter = new JSONObject();
 	}
 	
 	/**
 	 * converts the content into the correct content message
+	 * 
 	 * @param filename - name of the file the content came from (we need extension)
 	 * @param content - the content of the file
 	 * @param timestamp - the timestamp when the content was retrieved (or loaded)
-	 * @return
+	 * 
+     * @return JSON encoding of the URI and content (which is itself 
+     * base64-encoded within the JSON) 
 	 */
-	public String convertContent(String filename, String content, Date timestamp) {
+	public String convertContent(String filename, byte[] binaryContent, Date timestamp) {
+	    
 		String msg = null;
 		
 		// extract the filename's extension
 		String extension = extractExtension(filename);
 		
+		//TODO: Other source file formats (such as HTML and JSON)
 		// call the appropriate collector converter
 		if (extension.equalsIgnoreCase("xml")) {
-			convertXML(filename, timestamp, content);
-			msg = jsonConverter.toString();
-		} else if (extension.equalsIgnoreCase("html")) {
-			//TODO:
-	        msg = content;
-		} else if (extension.equalsIgnoreCase("json")) {
-			//TODO:
-	        msg = content;
+			msg = convertToJson(filename, timestamp, binaryContent);
 		} else {
-		    msg = content;
+		    // Default handling of a file
+		    msg = convertToJson(filename, timestamp, binaryContent);
 		}
 		return msg;
 	}
 	
-	/**
-	 * identifies the extension of the form <name.ext>
-	 * @param filename 
-	 * @return - returns the extension of the file
-	 */
+	/** Gets the extension (without dot) from a filename. */
 	private String extractExtension(String filename) {
 		String extension = null;
 		String[] parts = filename.split("\\.");
@@ -68,41 +61,42 @@ public class ContentConverter {
 		return extension;
 	}
 	
+	// TODO: Make timestamp semantics more consistent. Files use collection 
+	// (read) time, while web pages use last modification time.
 	/**
-	 * converts XML content into our JSON format
-	 * @param filename
-	 * @param timestamp
-	 * @param content
+	 * Converts binary content into our JSON format
+	 * 
+	 * @param filename              Name of file being sent
+	 * @param timestamp             Timestamp for file
+	 * @param base64EncodedContent  Byte content of file, encoded as Base64
 	 */
-	private void convertXML(String filename, Date timestamp, String content) {
+	private String convertToJson(String filename, Date timestamp, byte[] binaryContent) {
 	    
 	    try {
-		jsonConverter.put("dateCollected", timestamp.toString());
-		
-		JSONObject jsonSource = new JSONObject();
-		jsonSource.put("name", filename);
-		jsonSource.put("URL", filename);
-		jsonConverter.put("source", jsonSource);
-		
-		jsonConverter.put("contentType", "text/xml");
-		String encodedContent = encodeContent(content);
-		jsonConverter.put("content", encodedContent);
-	    } catch (JSONException e) {
+	        // Convert to Base64
+	        String base64EncodedContent = DatatypeConverter.printBase64Binary(binaryContent);
+	        
+	        // Populate JSON
+	        JSONObject json = new JSONObject();
+	        json.put("dateCollected", timestamp.toString());
+
+	        JSONObject sourceSection = new JSONObject();
+	        sourceSection.put("name", filename);
+	        sourceSection.put("URL", filename);
+	        json.put("source", sourceSection);
+
+	        json.put("contentType", "text/xml");
+	        json.put("content", base64EncodedContent);
+	        
+	        return json.toString();
+	    } 
+	    catch (JSONException e) {
 	        e.printStackTrace();
 	        //TODO: need to resolve this!!!!
+	        return "";
 	    }
 	}
-
-	/**
-	 * encodes the content to fit within a json value, this means we're assuming only double quotation marks need to be escaped
-	 * @param content
-	 * @return - a json value encoded string
-	 */
-	private String encodeContent(String content) {
-		String newContent = content.replaceAll("\\\"", "\\\\\"");
-		return newContent;
-	}
-	
+	    
 	// MAIN TEST PROGRAM
 	static public void main(String[] args) throws IOException {
 	    String cwd = System.getProperty("user.dir");
@@ -141,7 +135,8 @@ public class ContentConverter {
 	          }
 	        Date timestamp = new Date();
 	        
-	        String results = contConverter.convertContent(f.getAbsolutePath(), buffer.toString(), timestamp);
+	        byte[] content = buffer.toString().getBytes();
+	        String results = contConverter.convertContent(f.getAbsolutePath(), content, timestamp);
 	        if(results != null) {
 	            System.out.print(results);
 	        } else {

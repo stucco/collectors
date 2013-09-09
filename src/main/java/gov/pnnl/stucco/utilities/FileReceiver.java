@@ -4,11 +4,19 @@ package gov.pnnl.stucco.utilities;
  */
 import gov.pnnl.stucco.collectors.Config;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
+
+import javax.xml.bind.DatatypeConverter;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
@@ -19,12 +27,8 @@ public class FileReceiver {
   /** Configuration for RabbitMQ. */
   private Map<String, Object> rabbitMq;
 
-  private final static String EOL = System.getProperty("line.separator");
-
   /** Directory in which to write received files. */
   private File directory;
-  
-  
   
   
   @SuppressWarnings("unchecked")
@@ -75,12 +79,13 @@ public class FileReceiver {
       String[] messagePart = unwrapMessage(consumer);
       String filename = messagePart[0];
       String content  = messagePart[1];
+      byte[] byteContent = DatatypeConverter.parseBase64Binary(content);
       
       // Save the received file
       File f = new File(directory, filename);
       try {
         System.out.println(" [x] Received file '" + filename + "'");
-        writeFile(f, content);
+        writeFile(f, byteContent);
       }
       catch (IOException e) {
         System.err.println("Unable to save file '" + f + "' because of IOException");
@@ -94,17 +99,20 @@ public class FileReceiver {
     // Get a message from a delivery
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
     String message = new String(delivery.getBody());
-    int messageLength = message.length();
 
-    // Extract the filename
-    int filenameLength = message.indexOf(EOL);
-    String filename = message.substring(0, filenameLength);
-
-    // Extract the content
-    int contentStart = filenameLength + EOL.length();
-    String content = message.substring(contentStart, messageLength);
-    
-    return new String[] { filename, content };
+    try {
+        // Get the JSON fields
+        JSONObject json = new JSONObject(message);
+        JSONObject source = json.getJSONObject("source");
+        String filename = source.getString("name");
+        String content = json.getString("content");
+        
+        return new String[] { filename, content };
+    } 
+    catch (JSONException e) {
+        e.printStackTrace();
+        return new String[] {"", ""};
+    }
   }
 
   /** 
@@ -113,18 +121,18 @@ public class FileReceiver {
    * @param f        File to write
    * @param content  Content of file
    */
-  private void writeFile(File f, String content) throws IOException {
-    BufferedWriter out = null;
-    
-    try {      
-      out = new BufferedWriter(new FileWriter(f));
-      out.write(content);
-    }
-    finally {
-      if (out != null) {
-        out.close();
+  private void writeFile(File f, byte[] content) throws IOException {
+      OutputStream out = null;
+      try {
+          out = new BufferedOutputStream(new FileOutputStream(f));
+          out.write(content);
+          
       }
-    }
+      finally {
+          if (out != null) {
+              out.close();
+          }
+      }
   }
 
   public static void main(String[] argv) throws Exception {
