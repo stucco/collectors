@@ -1,5 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
+import java.util.Map;
+
 /**
  * $OPEN_SOURCE_DISCLAIMER$
  */
@@ -11,6 +13,13 @@ public abstract class CollectorAbstractBase implements Collector {
     protected final ContentConverter m_contentConverter = new ContentConverter();
     
     private int numberOfThreads = 1;
+    
+    /** Map of configuration data for the specific collector. */
+    private Map<String, String> configData;
+
+    protected CollectorAbstractBase(Map<String, String> configData) {
+        this.configData = configData;
+    }
 
     public void setNumberOfThreads(int threadCount) {
         

@@ -35,9 +35,10 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
      * @param URI - where to get the contents on the web
      * @param configData - data from the configuration file (you need to know where to look for stuff)
      */
-    public CollectorWebPageImpl(String URI, Map<String, Object> configData) {
+    public CollectorWebPageImpl(Map<String, String> configData) {
+        super(configData);
         
-        m_URI = URI;  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
+        m_URI = configData.get("source-URI");  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
     }
     
     

@@ -10,16 +10,20 @@ import java.util.Map;
 public class CollectorFactory {
     
     // simple factory approach, will probably want to redo this as we include more collector types
-    public static Collector makeCollector(String collectorType, String src, Map<String, Object> configData) {
+    /* 
+     * @param configData  Configuration data specific to a given collector
+     */
+    public static Collector makeCollector(Map<String, String> configData) {
+        String collectorType = configData.get("type");
         Collector aCollector = null;
         if(collectorType.equalsIgnoreCase("WEB")) {
-            CollectorWebPageImpl webCollector = new CollectorWebPageImpl(src, configData);
+            CollectorWebPageImpl webCollector = new CollectorWebPageImpl(configData);
             aCollector = webCollector;
         } else if(collectorType.equalsIgnoreCase("FILE")) {
-            CollectorFileImpl fileCollector = new CollectorFileImpl(new File(src));
+            CollectorFileImpl fileCollector = new CollectorFileImpl(configData);
             aCollector = fileCollector;
         } else if(collectorType.equalsIgnoreCase("DIRECTORY")) {
-            CollectorDirectoryImpl dirCollector = new CollectorDirectoryImpl(new File(src));
+            CollectorDirectoryImpl dirCollector = new CollectorDirectoryImpl(configData);
             aCollector = dirCollector;
         } else if (collectorType.equalsIgnoreCase("RSS")) {
             // TODO: 

@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * $OPEN_SOURCE_DISCLAIMER$
@@ -25,12 +26,16 @@ public class CollectorFileImpl extends CollectorAbstractBase {
     
     
     /** Sets up a sender for a directory. */
-    public CollectorFileImpl(File fname) {
-      if (fname.isDirectory()) {
-        throw new IllegalArgumentException(fname + "is a directory, not a file");
+    public CollectorFileImpl(Map<String, String> configData) {
+      super(configData);
+      
+      String filename = configData.get("source-URI");
+      File f = new File(filename);
+      if (f.isDirectory()) {
+        throw new IllegalArgumentException(f + "is a directory, not a file");
       }
       
-      m_filename = fname;
+      m_filename = f;
     }
     
     /** Collects the content and sends it to the queue in a message. */
@@ -88,21 +93,6 @@ public class CollectorFileImpl extends CollectorAbstractBase {
     private String prepMessage(String URI, byte[] rawContent) {
         String jsonContent = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
         return jsonContent;
-    }
-    
-    
-    /** Small test driver. */
-    static public void main(String[] args) {
-        try {
-            File filename = new File("Send/malwaredomains-domains-short.txt");
-            CollectorFileImpl collectFile= new CollectorFileImpl(filename);
-            collectFile.collect();
-            
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error in finding file");
-        }
-
-    }
-    
+    }  
     
 }

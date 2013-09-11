@@ -33,7 +33,7 @@ public class Replayer {
         Collection<Object> collectorConfig = (Collection<Object>) replayerConfig.get("collectors");
         for(Object obj : collectorConfig) {
             Map<String, String> cc = (Map<String, String>) obj;
-            collectors.add(CollectorFactory.makeCollector(cc.get("type"),cc.get("URI"), configData));
+            collectors.add(CollectorFactory.makeCollector(cc));
         }
         
         outputDir = (String) replayerConfig.get("outputDir");

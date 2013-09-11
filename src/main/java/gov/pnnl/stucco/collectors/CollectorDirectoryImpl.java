@@ -5,6 +5,7 @@ package gov.pnnl.stucco.collectors;
  */
 
 import java.io.File;
+import java.util.Map;
 
 public class CollectorDirectoryImpl extends CollectorAbstractBase {
         
@@ -13,12 +14,15 @@ public class CollectorDirectoryImpl extends CollectorAbstractBase {
     
     
     /** Sets up a sender for a directory. */
-    public CollectorDirectoryImpl(File dir) {
-      if (!dir.isDirectory()) {
-        throw new IllegalArgumentException(dir + "is not a directory");
-      }
-      
-      directory = dir;
+    public CollectorDirectoryImpl(Map<String, String> configData) {
+        super(configData);
+        String dirName = configData.get("source-URI");
+        File dir = new File(dirName);
+        if (!dir.isDirectory()) {
+            throw new IllegalArgumentException(dir + "is not a directory");
+        }
+
+        directory = dir;
     }
     
     /**
@@ -27,13 +31,14 @@ public class CollectorDirectoryImpl extends CollectorAbstractBase {
      */
     @Override
     public void collect() {
-        File[] files = directory.listFiles();
-        for (File f : files) {
-            // Read the file
-            // TODO: should only instantiate this once and reuse
-            CollectorFileImpl cf = new CollectorFileImpl(f);
-            cf.collect();
-        }
+        throw new UnsupportedOperationException("Not implemented yet");
+//        File[] files = directory.listFiles();
+//        for (File f : files) {
+//            // Read the file
+//            // TODO: should only instantiate this once and reuse
+//            CollectorFileImpl cf = new CollectorFileImpl(f);
+//            cf.collect();
+//        }
     }
     
     /**
@@ -47,31 +52,6 @@ public class CollectorDirectoryImpl extends CollectorAbstractBase {
             fileArray[i] = files[i].getName();
         }     
         return fileArray;
-    }
-    
-    
-    /**
-     * Main
-     * @param args
-     */
-    static public void main(String[] args) {
-        try {
-            File dir = new File("Send");
-            CollectorDirectoryImpl collectDir = new CollectorDirectoryImpl(dir);
-            collectDir.collect();
-            
-            //print out files in directory
-            String[] fileArray = collectDir.listFiles();
-            for (int i=0; i<fileArray.length; i++) {
-                System.out.println(fileArray[i]);
-            }
-            
-        } catch (IllegalArgumentException e) {
-            System.out.println("Error in finding directory");
-        }
-
-    }
-    
-    
+    }    
 
 }
