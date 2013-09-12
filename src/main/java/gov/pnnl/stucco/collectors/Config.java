@@ -16,18 +16,28 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class Config {
     
-    static private Config instance = new Config();
+    /**
+     * File holding configuration data. This should get set but is given a
+     * default.
+     */
+    static private File configFile = new File("./config/data-sources.yml");
+    
+    static private Config instance;
     
     private Map<String, Object> config;
     
     
+    /** Sets the configuration file. */
+    public static void setConfigFile(File f) {
+        configFile = f;
+    }
+    
+    
     @SuppressWarnings("unchecked")
     private Config() {
-        String configFile = "./config/data-sources.yml";
-
         Yaml yaml = new Yaml();
         try {
-            InputStream input = new FileInputStream(new File(configFile));
+            InputStream input = new FileInputStream(configFile);
             config = (Map<String, Object>) yaml.load(input);
         } 
         catch (IOException e)  
@@ -38,6 +48,9 @@ public class Config {
     
     /** Gets the configuration map, using the default file. */
     static public Map<String, Object> getMap() {
+        if (instance == null) {
+            instance = new Config();
+        }
         return instance.config;
     }
     

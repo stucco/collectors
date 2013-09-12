@@ -20,5 +20,10 @@ public interface Collector {
      * perform the collection process for this source
      */
     public void collect();
+    
+    /**
+     * Cleans up any resources after collect is done with them.
+     */
+    public void clean();
 
 }

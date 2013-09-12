@@ -30,4 +30,6 @@ public abstract class CollectorAbstractBase implements Collector {
     }
 
     public abstract void collect();
+    
+    public abstract void clean();
 }

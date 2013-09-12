@@ -52,6 +52,10 @@ public class CollectorDirectoryImpl extends CollectorAbstractBase {
             fileArray[i] = files[i].getName();
         }     
         return fileArray;
+    }
+
+    @Override
+    public void clean() {        
     }    
 
 }

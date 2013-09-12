@@ -44,6 +44,7 @@ public class CollectorFileImpl extends CollectorAbstractBase {
         collectOnly();
         m_msgContent = prepMessage(m_filename.getName(), getRawContent());
         send();
+        clean();
     }
     
     /**
@@ -93,6 +94,12 @@ public class CollectorFileImpl extends CollectorAbstractBase {
     private String prepMessage(String URI, byte[] rawContent) {
         String jsonContent = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
         return jsonContent;
+    }
+
+    @Override
+    public void clean() {
+        m_rawContent = null;
+        m_msgContent = null;
     }  
     
 }

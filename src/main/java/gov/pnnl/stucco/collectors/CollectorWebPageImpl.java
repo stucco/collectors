@@ -48,6 +48,7 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
             m_rawContent = obtainWebPage(m_URI);
             m_msgContent = prepMessage(m_URI, m_rawContent);
             send();
+            clean();
         }
         catch (Exception e) 
         {
@@ -155,4 +156,11 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
         }
     }
 
+
+    @Override
+    public void clean() {
+        m_rawContent = null;
+        m_msgContent = null;
+    }  
+    
 }

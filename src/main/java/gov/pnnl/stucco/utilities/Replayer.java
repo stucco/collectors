@@ -6,7 +6,10 @@ package gov.pnnl.stucco.utilities;
 import gov.pnnl.stucco.collectors.Collector;
 import gov.pnnl.stucco.collectors.CollectorFactory;
 import gov.pnnl.stucco.collectors.Config;
+import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -56,12 +59,27 @@ public class Replayer {
      * Main program to replay a downloaded or previously saved forensic data. 
      */
 	static public void main(String[] args) {
-	    // Get the configuration data
-        Map<String, Object> config = Config.getMap();
+	    try {
+            CommandLine parser = new CommandLine();
+            parser.add1("-c");
+            parser.parse(args);
+            
+            if (parser.found("-c")) {
+                String configFilename = parser.getValue();
+                Config.setConfigFile(new File(configFilename));
+            }
+            
+            // Get the configuration data
+            Map<String, Object> config = Config.getMap();
 
-        // get the content and play it
-        Replayer replay = new Replayer(config);
-        replay.play();
+            // get the content and play it
+            Replayer replay = new Replayer(config);
+            replay.play();
+        } 
+        catch (UsageException e) {
+            System.err.println("Usage: Replayer -c configFile");
+            System.exit(1);
+        }
     }
 
 }
