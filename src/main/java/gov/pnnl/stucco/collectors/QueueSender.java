@@ -36,28 +36,33 @@ public class QueueSender {
     private void sendFile(String msg, String queueName) throws IOException {
       //TODO: Refactor to reuse the connection/channel instead of creating anew each time
       
-      // Set up the connection
-      ConnectionFactory factory = new ConnectionFactory();
-      String host = (String) rabbitMq.get("host");
-      factory.setHost(host);
-      Connection connection = factory.newConnection();
-      
-      // Set up the channel with one queue
-      Channel channel = connection.createChannel();
-      channel.queueDeclare(queueName, false, false, false, null);
-      
-      //convert content into bytes
-      byte[] messageBytes = msg.getBytes();
-      
-      // Send the file as a message
-      channel.basicPublish("", queueName, null, messageBytes);
-      
-      //TODO: write to log the first N bytes of the message
-      System.out.println(" [x] Sent message ");
+      try {
+          // Set up the connection
+          ConnectionFactory factory = new ConnectionFactory();
+          String host = (String) rabbitMq.get("host");
+          factory.setHost(host);
+          Connection connection = factory.newConnection();
+          
+          // Set up the channel with one queue
+          Channel channel = connection.createChannel();
+          channel.queueDeclare(queueName, false, false, false, null);
+          
+          //convert content into bytes
+          byte[] messageBytes = msg.getBytes();
+          
+          // Send the file as a message
+          channel.basicPublish("", queueName, null, messageBytes);
+          
+          //TODO: write to log the first N bytes of the message
+          System.out.println(" [x] Sent message ");
 
-      // Close the connection/channel
-      channel.close();
-      connection.close();
+          // Close the connection/channel
+          channel.close();
+          connection.close();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }  
     
     static public void main(String[] args) {

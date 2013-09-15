@@ -22,6 +22,9 @@ public class CollectorFactory {
         } else if(collectorType.equalsIgnoreCase("FILE")) {
             CollectorFileImpl fileCollector = new CollectorFileImpl(configData);
             aCollector = fileCollector;
+        } else if(collectorType.equalsIgnoreCase("FILEBYLINE")) {
+            CollectorFileByLineImpl fileByLineCollector = new CollectorFileByLineImpl(configData);
+            aCollector = fileByLineCollector;
         } else if(collectorType.equalsIgnoreCase("DIRECTORY")) {
             CollectorDirectoryImpl dirCollector = new CollectorDirectoryImpl(configData);
             aCollector = dirCollector;
