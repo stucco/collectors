@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.json.JSONException;
@@ -15,18 +16,16 @@ import org.json.JSONObject;
 public class DocServiceClient {
 
     // IP address or host name
-    private String host;
+    private String host = "localhost";
     
     // TCP port number
-    private int port;
-    
+    private int port = 8118;
+
     /**
-     * Default constructor
+     * Default constructor 
      */
-    public DocServiceClient() {
-        host = "localhost";
-        port = 8118;
-    }
+    public DocServiceClient()
+    {}
     
     /**
      * Constructs client with specified connection information
@@ -36,6 +35,17 @@ public class DocServiceClient {
     public DocServiceClient(String host, int port) {
         this.host = host;
         this.port = port;
+    }
+    
+    /**
+     * Constructs client with specified connection information
+     * @param config options that contain information on client connection to server
+     */
+    public DocServiceClient(Map<String, Object> config) {
+        if( config != null) {             
+            this.host = (String) config.get("host");
+            this.port = (Integer) config.get("port");
+        }
     }
 
     /**
@@ -55,6 +65,30 @@ public class DocServiceClient {
      */
     public String store(String text) throws DocServiceException {
         return store(new DocumentObject(text));
+    }
+    
+    /**
+     * Convenience method to allow caller to store bytes directly and specify
+     * the content-type
+     * @param text the text of the document to store
+     * @param contentType 
+     * @return Document ID
+     * @throws DocServiceException
+     */
+    public String store(byte[] bytes, String contentType) throws DocServiceException {
+        return store(new DocumentObject(bytes, contentType));
+    }
+    
+    /**
+     * Convenience method to allow caller to store String directly and specify
+     * the content-type
+     * @param text the text of the document to store
+     * @param contentType 
+     * @return Document ID
+     * @throws DocServiceException
+     */
+    public String store(String text, String contentType) throws DocServiceException {
+        return store(new DocumentObject(text, contentType));
     }
     
     /**
