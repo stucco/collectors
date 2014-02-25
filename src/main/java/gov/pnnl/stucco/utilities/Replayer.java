@@ -61,12 +61,20 @@ public class Replayer {
 	static public void main(String[] args) {
 	    try {
             CommandLine parser = new CommandLine();
-            parser.add1("-c");
+            parser.add1("-file");
+            parser.add1("-url");
             parser.parse(args);
             
-            if (parser.found("-c")) {
+            if (parser.found("-file")  &&  parser.found("-url")) {
+                throw new UsageException("Can't specify both file and URL");
+            }
+            else if (parser.found("-file")) {
                 String configFilename = parser.getValue();
                 Config.setConfigFile(new File(configFilename));
+            }
+            else if (parser.found("-url")) {
+                String configUrl = parser.getValue();
+                Config.setConfigUrl(configUrl);
             }
             
             // Get the configuration data
@@ -77,7 +85,7 @@ public class Replayer {
             replay.play();
         } 
         catch (UsageException e) {
-            System.err.println("Usage: Replayer -c configFile");
+            System.err.println("Usage: Replayer (-file configFile | -url configUrl)");
             System.exit(1);
         }
     }

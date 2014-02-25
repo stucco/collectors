@@ -3,6 +3,7 @@ package gov.pnnl.stucco.utilities;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 import gov.pnnl.stucco.collectors.Config;
+import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -135,10 +136,36 @@ public class FileReceiver {
       }
   }
 
-  public static void main(String[] argv) throws Exception {
-    File receiveDir = new File("data/Receive");
-    FileReceiver receiver = new FileReceiver(receiveDir);
-    receiver.receive();
+  public static void main(String[] args) throws Exception {
+      try {
+          CommandLine parser = new CommandLine();
+          parser.add1("-file");
+          parser.add1("-url");
+          parser.parse(args);
+          
+          if (parser.found("-file")  &&  parser.found("-url")) {
+              throw new UsageException("Can't specify both file and URL");
+          }
+          else if (parser.found("-file")) {
+              // Set up config to be from file
+              String configFilename = parser.getValue();
+              Config.setConfigFile(new File(configFilename));
+          }
+          else if (parser.found("-url")) {
+              // Set up config to be from service
+              String configUrl = parser.getValue();
+              Config.setConfigUrl(configUrl);
+          }
+          
+          // Receive content. Uses config, so must be done after config source is established.
+          File receiveDir = new File("data/Receive");
+          FileReceiver receiver = new FileReceiver(receiveDir);
+          receiver.receive();
+      } 
+      catch (UsageException e) {
+          System.err.println("Usage: Replayer (-file configFile | -url configUrl)");
+          System.exit(1);
+      }
   }
 
 }
