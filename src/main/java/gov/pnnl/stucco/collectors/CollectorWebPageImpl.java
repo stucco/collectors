@@ -17,19 +17,7 @@ import java.util.Map;
 public class CollectorWebPageImpl extends CollectorAbstractBase{
     /** URI from which we are obtaining content*/
     private String m_URI;
-    
-    /** content of a prepared message */
-    private String m_msgContent;
-    
-    /** raw content from source */
-    private String m_rawContent;
-    
-    /** time the data was collected */
-    private Date m_timestamp = null;
-    
-    /** what does the URI response tell us about the content we just got back */
-    private String m_contentType;
-    
+        
     /** 
      * constructor for obtaining the contents of a webpage
      * @param URI - where to get the contents on the web
@@ -39,14 +27,14 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
         super(configData);
         
         m_URI = configData.get("source-URI");  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
+        m_metadata.put("sourceUrl", m_URI);
     }
     
     
     @Override
     public void collect() {  
         try {
-            m_rawContent = obtainWebPage(m_URI);
-            m_msgContent = prepMessage(m_URI, m_rawContent);
+            m_rawContent = obtainWebPage(m_URI).getBytes();
             send();
             clean();
         }
@@ -55,32 +43,6 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
             System.out.println("Exception: " + e.toString());
         }
         
-    }
-    
-    /**
-     * Send the content when requested
-     */
-    public void send() {
-        m_queueSender.send(m_msgContent);
-    }
-    
-    /**
-     * Preparing the message we will send into the queue  (TODO: we will likely remove this as it prepends the file name)
-     * @param URI         URI of the web page
-     * @param rawContent  String content of the page
-     * 
-     * @return JSON encoding of the URI and content (which is itself 
-     * base64-encoded within the JSON) 
-     */
-    private String prepMessage(String URI, String rawContent) {
-        // get only the URI pagename
-        String[] parts = URI.split("/");
-        String uriName = parts[parts.length-1];
-        
-        // add the content 
-        byte[] byteContent = rawContent.getBytes();
-        String jsonContent = m_contentConverter.convertContent(uriName, byteContent, m_timestamp);
-        return jsonContent;
     }
     
     /** retrieve the webpage */
@@ -108,7 +70,7 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
           connection.connect();
           
           long contentLength = Long.parseLong(connection.getHeaderField("Content-Length"));
-          m_contentType = connection.getHeaderField("Content-Type");
+          m_metadata.put("contentType", connection.getHeaderField("Content-Type"));
           String timestamp = connection.getHeaderField("Last-Modified");
           
           // using apache http components there is a easier way to do this conversion but for now we do it this way.
@@ -160,7 +122,6 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
     @Override
     public void clean() {
         m_rawContent = null;
-        m_msgContent = null;
     }  
     
 }
