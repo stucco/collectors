@@ -3,6 +3,11 @@ package gov.pnnl.stucco.utilities;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 import gov.pnnl.stucco.collectors.Config;
+import gov.pnnl.stucco.utilities.CommandLine.UsageException;
+
+import gov.pnnl.stucco.doc_service_client.DocServiceClient;
+import gov.pnnl.stucco.doc_service_client.DocServiceException;
+import gov.pnnl.stucco.doc_service_client.DocumentObject;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedWriter;
@@ -18,12 +23,16 @@ import javax.xml.bind.DatatypeConverter;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 
 public class FileReceiver {
+  /** Client to fetch documents from document-service */
+  DocServiceClient docServiceClient;
+  
   /** Configuration for RabbitMQ. */
   private Map<String, Object> rabbitMq;
 
@@ -36,6 +45,9 @@ public class FileReceiver {
       directory = dir;
       Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap().get("default");
       rabbitMq = (Map<String, Object>) defaultSection.get("rabbitmq");
+      
+      Map<String, Object> docServiceConfig = (Map<String, Object>) defaultSection.get("document-service");
+      docServiceClient = new DocServiceClient(docServiceConfig);
   }
   
   public void receive() {
@@ -96,23 +108,41 @@ public class FileReceiver {
 
   /** Extract the content from a message. */
   private String[] unwrapMessage(QueueingConsumer consumer) throws InterruptedException {
+    String filename = "";
+    String content = "";
+      
     // Get a message from a delivery
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
     String message = new String(delivery.getBody());
-
+    BasicProperties properties = delivery.getProperties();
+    Map<String, Object> headers = properties.getHeaders();
+    
+    if (headers == null) {
+        return new String[] {filename, content};
+    }
+    
     try {
-        // Get the JSON fields
-        JSONObject json = new JSONObject(message);
-        JSONObject source = json.getJSONObject("source");
-        String filename = source.getString("name");
-        String content = json.getString("content");
-        
-        return new String[] { filename, content };
+        String hasContent = headers.get("content").toString();
+        if (hasContent.equals("false")) {
+            String docId = message;
+            DocumentObject doc = docServiceClient.fetch(docId);
+            filename = docId; // we don't have a filename, so use the doc ID
+            content = DatatypeConverter.printBase64Binary(doc.getDataAsBytes());
+        } else {
+            // Get the JSON fields
+            JSONObject json = new JSONObject(message);
+            JSONObject source = json.getJSONObject("source");
+            filename = source.getString("name");
+            content = json.getString("content");
+        }
     } 
     catch (JSONException e) {
         e.printStackTrace();
-        return new String[] {"", ""};
     }
+    catch (DocServiceException e) {
+        e.printStackTrace();
+    }
+    return new String[] {filename, content};
   }
 
   /** 
@@ -135,10 +165,36 @@ public class FileReceiver {
       }
   }
 
-  public static void main(String[] argv) throws Exception {
-    File receiveDir = new File("data/Receive");
-    FileReceiver receiver = new FileReceiver(receiveDir);
-    receiver.receive();
+  public static void main(String[] args) throws Exception {
+      try {
+          CommandLine parser = new CommandLine();
+          parser.add1("-file");
+          parser.add1("-url");
+          parser.parse(args);
+          
+          if (parser.found("-file")  &&  parser.found("-url")) {
+              throw new UsageException("Can't specify both file and URL");
+          }
+          else if (parser.found("-file")) {
+              // Set up config to be from file
+              String configFilename = parser.getValue();
+              Config.setConfigFile(new File(configFilename));
+          }
+          else if (parser.found("-url")) {
+              // Set up config to be from service
+              String configUrl = parser.getValue();
+              Config.setConfigUrl(configUrl);
+          }
+          
+          // Receive content. Uses config, so must be done after config source is established.
+          File receiveDir = new File("data/Receive");
+          FileReceiver receiver = new FileReceiver(receiveDir);
+          receiver.receive();
+      } 
+      catch (UsageException e) {
+          System.err.println("Usage: Replayer (-file configFile | -url configUrl)");
+          System.exit(1);
+      }
   }
 
 }

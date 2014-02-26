@@ -3,6 +3,7 @@
 	<name>collectors</name>
 	<comment></comment>
 	<projects>
+		<project>jetcd</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

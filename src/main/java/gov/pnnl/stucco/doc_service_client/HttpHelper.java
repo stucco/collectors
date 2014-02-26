@@ -43,7 +43,7 @@ public class HttpHelper {
         con.setDoOutput(true);
         con.setRequestMethod("PUT");
         con.setRequestProperty("content-Type", contentType);
-        
+
         OutputStream out = con.getOutputStream();
         try {
             out.write(data, 0, data.length);

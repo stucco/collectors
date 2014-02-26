@@ -46,6 +46,26 @@ public class DocumentObject {
     }
     
     /**
+     * Constructs a DocumentObject from a byte array and specifies content-type
+     * @param bytes
+     * @param contentType
+     */
+    public DocumentObject(byte[] bytes, String contentType) {
+        this.bytes = bytes;
+        this.contentType = contentType;
+    }
+    
+    /**
+     * Constructs a DocumentObject from a String and specifies content-type
+     * @param text
+     * @param contentType
+     */
+    public DocumentObject(String text, String contentType) {
+        this.bytes = text.getBytes();
+        this.contentType = contentType;
+    }
+    
+    /**
      * Gets the contents of the document as raw bytes
      * @return bytes
      */

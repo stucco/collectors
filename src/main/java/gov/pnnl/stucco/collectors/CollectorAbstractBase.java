@@ -2,6 +2,8 @@ package gov.pnnl.stucco.collectors;
 
 import java.util.Map;
 
+import gov.pnnl.stucco.doc_service_client.*;
+
 /**
  * $OPEN_SOURCE_DISCLAIMER$
  */
@@ -19,6 +21,14 @@ public abstract class CollectorAbstractBase implements Collector {
 
     protected CollectorAbstractBase(Map<String, String> configData) {
         this.configData = configData;
+        
+        Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap().get("default");
+        Map<String, Object> docServiceConfig = (Map<String, Object>) defaultSection.get("document-service");
+        
+        DocServiceClient docServiceClient = new DocServiceClient(docServiceConfig);
+        
+        // we create a delegate for queueSender
+        m_queueSender.setDocService(docServiceClient);
     }
 
     public void setNumberOfThreads(int threadCount) {
