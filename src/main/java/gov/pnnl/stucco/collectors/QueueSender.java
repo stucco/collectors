@@ -32,9 +32,9 @@ public class QueueSender {
       
       try {
           byte[] messageBytes = rawContent;
-          //TODO: get MAX_CONTENT_SIZE from configuration
-          final int MAX_CONTENT_SIZE = 1048576;
-          if (rawContent.length > MAX_CONTENT_SIZE) {
+          int maxMessageSize = (Integer) rabbitMq.get("message_size_limit");
+          
+          if (rawContent.length > maxMessageSize) {
               String docId = docServiceClient.store(rawContent, metadata.get("contentType"));              
               messageBytes = docId.getBytes();
               metadata.put("content", "false");
@@ -59,8 +59,7 @@ public class QueueSender {
           Connection connection = factory.newConnection();
           
           // Set up the channel with exchange and queue
-          String exchangeName = "stucco";
-          String queueName = (String) rabbitMq.get("queue");
+          String exchangeName = (String) rabbitMq.get("exchange");
           String dataSource = metadata.get("sourceName");
           String sensorName = metadata.get("sensorName");
           String routingKey = "stucco.in." + dataSource;
@@ -70,8 +69,6 @@ public class QueueSender {
           
           Channel channel = connection.createChannel();
           channel.exchangeDeclare(exchangeName, "topic", true, false, false, null);
-          //channel.queueDeclare(queueName, false, false, false, null);
-          //channel.queueBind(exchangeName, queueName, routingKey);
           
           // Send the file as a message
           channel.basicPublish(exchangeName, routingKey, builder.build(), messageBytes);
