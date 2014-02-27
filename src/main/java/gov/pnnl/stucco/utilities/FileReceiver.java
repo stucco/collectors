@@ -20,6 +20,7 @@ import java.util.Map;
 
 import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.io.FilenameUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -43,11 +44,13 @@ public class FileReceiver {
   @SuppressWarnings("unchecked")
   public FileReceiver(File dir) {
       directory = dir;
+
       Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
       rabbitMq = (Map<String, Object>) configMap.get("rabbitmq");
       
       Map<String, Object> stuccoConfig = (Map<String, Object>) configMap.get("stucco");
       Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoConfig.get("document-service");
+
       docServiceClient = new DocServiceClient(docServiceConfig);
   }
   
@@ -67,14 +70,17 @@ public class FileReceiver {
   private QueueingConsumer initConsumer() throws IOException {
     // Create a connection with one channel
     ConnectionFactory factory = new ConnectionFactory();
-    String host = (String) rabbitMq.get("host");
+    String host = (String) rabbitMq.get("/rabbitmq/host");
     factory.setHost(host);
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
 
     // Set up a queue for the channel
-    String queueName = (String) rabbitMq.get("queue");
-    channel.queueDeclare(queueName, false, false, false, null);
+    final String EXCHANGE_NAME = "stucco";
+    channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, false, false, null);
+    String queueName = channel.queueDeclare().getQueue();
+    channel.queueBind(queueName, EXCHANGE_NAME, "stucco.in.#");
+    
     System.out.println(" [*] Waiting for messages. Interrupt to stop.");
 
     // TODO: Replace this? The RabbitMQ documentation says it's deprecated.
@@ -97,7 +103,7 @@ public class FileReceiver {
       // Save the received file
       File f = new File(directory, filename);
       try {
-        System.out.println(" [x] Received file '" + filename + "'");
+        System.out.println("     Writing file '" + filename + "'");
         writeFile(f, byteContent);
       }
       catch (IOException e) {
@@ -115,6 +121,10 @@ public class FileReceiver {
     // Get a message from a delivery
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
     String message = new String(delivery.getBody());
+    String routingKey = delivery.getEnvelope().getRoutingKey();
+
+    System.out.println(" [x] Received '" + routingKey + "':'" + message + "'");
+    
     BasicProperties properties = delivery.getProperties();
     Map<String, Object> headers = properties.getHeaders();
     
@@ -122,24 +132,20 @@ public class FileReceiver {
         return new String[] {filename, content};
     }
     
+    filename = FilenameUtils.getName(headers.get("sourceUrl").toString());
     try {
         String hasContent = headers.get("content").toString();
         if (hasContent.equals("false")) {
             String docId = message;
             DocumentObject doc = docServiceClient.fetch(docId);
-            filename = docId; // we don't have a filename, so use the doc ID
+            if (filename.isEmpty()) {
+                filename = docId;
+            }
             content = DatatypeConverter.printBase64Binary(doc.getDataAsBytes());
         } else {
-            // Get the JSON fields
-            JSONObject json = new JSONObject(message);
-            JSONObject source = json.getJSONObject("source");
-            filename = source.getString("name");
-            content = json.getString("content");
+            content = DatatypeConverter.printBase64Binary(message.getBytes());
         }
     } 
-    catch (JSONException e) {
-        e.printStackTrace();
-    }
     catch (DocServiceException e) {
         e.printStackTrace();
     }
@@ -193,7 +199,7 @@ public class FileReceiver {
           receiver.receive();
       } 
       catch (UsageException e) {
-          System.err.println("Usage: Replayer (-file configFile | -url configUrl)");
+          System.err.println("Usage: FileReceiver (-file configFile | -url configUrl)");
           System.exit(1);
       }
   }
