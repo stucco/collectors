@@ -2,6 +2,10 @@ package gov.pnnl.stucco.collectors;
 
 
 import gov.pnnl.stucco.jetcd.StuccoClient;
+import gov.pnnl.stucco.jetcd.StuccoJetcdUtil;
+import gov.pnnl.stucco.utilities.CommandLine;
+import gov.pnnl.stucco.utilities.Replayer;
+import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -13,6 +17,8 @@ import jetcd.EtcdException;
 import jetcd.StuccoClientImpl;
 
 import org.yaml.snakeyaml.Yaml;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Class for YAML configuration file(s).
@@ -31,7 +37,7 @@ public class Config {
     
     static private Config instance;
     
-    private Map<String, Object> config;
+    private Map<String, Object> config = null;
     
     
     /** Sets the configuration file. */
@@ -45,18 +51,38 @@ public class Config {
     
     @SuppressWarnings("unchecked")
     private Config() {
+    }
+    
+    /** 
+     * Loads the configuration, either from file, URL, or environment variables,
+     * in that order of preference.
+     */
+    private void load() {
         try {
             if (configFile != null) {
                 // Use config file
                 Yaml yaml = new Yaml();
                 InputStream input = new FileInputStream(configFile);
-                config = (Map<String, Object>) yaml.load(input);
+                Map<String, Object> yamlConfig = (Map<String, Object>) yaml.load(input);
+                
+                config = (Map<String, Object>) yamlConfig.get("default");
             }
-            else if (configUrl != null) {
+            else {
+                
+                if (configUrl == null) {
+                    String host = System.getenv("ETCD_HOST");
+                    String port = System.getenv("ETCD_PORT");
+                    if (host == null || port == null) {
+                        throw new EtcdException(1, "", "Missing URL and environment variables", 0);
+                    }
+                    configUrl = String.format("http://%s:%s", host, port);
+                }
+                
                 // Use config service
                 StuccoClient client = new StuccoClientImpl(configUrl);
-                config = client.listNested("/stucco");
+                config = client.listNested("/");
             }
+            config = StuccoJetcdUtil.trimKeyPaths(config);
         } 
         catch (IOException e) {
             System.err.printf("Configuration file %s not found%n", configFile);
@@ -69,9 +95,48 @@ public class Config {
     /** Gets the configuration map, using the default file. */
     static public Map<String, Object> getMap() {
         if (instance == null) {
+            // Create the empty singleton instance
             instance = new Config();
         }
+        
+        if (instance.config == null) {
+            // The config hasn't been loaded yet, so do it now
+            instance.load();
+        }
+        
         return instance.config;
+    }
+    
+    static public void main(String[] args) {
+        try {
+            CommandLine parser = new CommandLine();
+            parser.add1("-file");
+            parser.add1("-url");
+            parser.parse(args);
+
+            if (parser.found("-file")  &&  parser.found("-url")) {
+                throw new UsageException("Can't specify both file and URL");
+            }
+            else if (parser.found("-file")) {
+                String configFilename = parser.getValue();
+                Config.setConfigFile(new File(configFilename));
+            }
+            else if (parser.found("-url")) {
+                String configUrl = parser.getValue();
+                Config.setConfigUrl(configUrl);
+            }
+
+            // Get the configuration data
+            Map<String, Object> config = Config.getMap();
+            
+            System.err.println("Top-level keys = " + config.keySet());
+            
+        } 
+        catch (UsageException e) {
+            System.err.println("Usage: Replayer (-file configFile | -url configUrl)");
+            System.exit(1);
+        }
+        
     }
     
 }

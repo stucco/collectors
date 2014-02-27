@@ -43,10 +43,11 @@ public class FileReceiver {
   @SuppressWarnings("unchecked")
   public FileReceiver(File dir) {
       directory = dir;
-      Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap().get("default");
-      rabbitMq = (Map<String, Object>) defaultSection.get("rabbitmq");
+      Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
+      rabbitMq = (Map<String, Object>) configMap.get("rabbitmq");
       
-      Map<String, Object> docServiceConfig = (Map<String, Object>) defaultSection.get("document-service");
+      Map<String, Object> stuccoConfig = (Map<String, Object>) configMap.get("stucco");
+      Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoConfig.get("document-service");
       docServiceClient = new DocServiceClient(docServiceConfig);
   }
   
