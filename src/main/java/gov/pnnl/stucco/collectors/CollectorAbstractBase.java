@@ -1,5 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import gov.pnnl.stucco.doc_service_client.*;
@@ -11,8 +13,15 @@ import gov.pnnl.stucco.doc_service_client.*;
 /** Abstract base class used in implementing Collectors. */
 public abstract class CollectorAbstractBase implements Collector {
     
-    protected final QueueSender m_queueSender           = new QueueSender();
     protected final ContentConverter m_contentConverter = new ContentConverter();
+    protected final Map<String, String> m_metadata = new HashMap<String, String>();
+    protected final QueueSender m_queueSender           = new QueueSender();
+    
+    /** raw content from source */
+    protected byte[] m_rawContent;
+    
+    /** time the data was collected */
+    protected Date m_timestamp = null;
     
     private int numberOfThreads = 1;
     
@@ -21,6 +30,11 @@ public abstract class CollectorAbstractBase implements Collector {
 
     protected CollectorAbstractBase(Map<String, String> configData) {
         this.configData = configData;
+        
+        // default metadata comes from configuration
+        m_metadata.put("contentType", configData.get("content-type"));
+        m_metadata.put("sourceName", configData.get("source-name"));
+        m_metadata.put("sourceUrl", configData.get("source-URI"));
         
         Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap().get("default");
         Map<String, Object> docServiceConfig = (Map<String, Object>) defaultSection.get("document-service");
@@ -31,6 +45,13 @@ public abstract class CollectorAbstractBase implements Collector {
         m_queueSender.setDocService(docServiceClient);
     }
 
+    /**
+     * Send the content when requested
+     */
+    public void send() {
+        m_queueSender.send(m_metadata, m_rawContent);
+    }
+    
     public void setNumberOfThreads(int threadCount) {
         
         // we're only allow the number of threads to be between 1 and 8 (at this time)

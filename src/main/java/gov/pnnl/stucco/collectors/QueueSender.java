@@ -5,14 +5,8 @@ package gov.pnnl.stucco.collectors;
 import gov.pnnl.stucco.doc_service_client.DocServiceClient;
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-
-import javax.xml.bind.DatatypeConverter;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
@@ -32,47 +26,29 @@ public class QueueSender {
         rabbitMq = (Map<String, Object>) defaultSection.get("rabbitmq");
     }
     
-    /** Sends whatever a messages it receives */
-    public void send(String msg) {
-        try {
-            String queueName = (String) rabbitMq.get("queue"); 
-            sendFile(msg, queueName);   
-        }
-        catch (IOException e) {
-          System.err.println("Unable to send message because of IOException");
-        }
-    }
-    
     /** Sends a file to the specified queue. */
-    private void sendFile(String msg, String queueName) throws IOException {
+    public void send(Map<String, String> metadata, byte[] rawContent) {
       //TODO: Refactor to reuse the connection/channel instead of creating anew each time
       
       try {
-          String msgString = null; // will be set as either content string or document ID 
+          byte[] messageBytes = rawContent;
+          int maxMessageSize = (Integer) rabbitMq.get("message_size_limit");
+          
+          if (rawContent.length > maxMessageSize) {
+              String docId = docServiceClient.store(rawContent, metadata.get("contentType"));              
+              messageBytes = docId.getBytes();
+              metadata.put("content", "false");
+          } else {
+              metadata.put("content", "true");
+          }
           
           // Build AMPQ Basic Properties
           AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
           Map<String, Object> headers = new HashMap<String, Object>();
+          headers.put("content", metadata.get("content"));
+          headers.put("sourceUrl", metadata.get("sourceUrl"));
           
-          // Unpack the JSON, check the data size, send to doc service if above threshold 
-          JSONObject json = new JSONObject(msg);
-          
-          String contentType = json.getString("contentType");
-          String contentBase64 = json.getString("content");
-          byte[] rawContent = DatatypeConverter.parseBase64Binary(contentBase64);
-          
-          //TODO: get MAX_CONTENT_SIZE from configuration
-          final int MAX_CONTENT_SIZE = 1048576;
-          if (rawContent.length > MAX_CONTENT_SIZE) {
-              String docId = docServiceClient.store(rawContent, contentType);              
-              msgString = docId;
-              headers.put("content", "false");
-          } else {
-              msgString = msg;
-              headers.put("content", "true");
-          }              
-          
-          builder.contentType(contentType);
+          builder.contentType(metadata.get("contentType"));
           builder.deliveryMode(2 /*persistent*/);
           builder.headers(headers);
           
@@ -82,15 +58,20 @@ public class QueueSender {
           factory.setHost(host);
           Connection connection = factory.newConnection();
           
-          // Set up the channel with one queue
-          Channel channel = connection.createChannel();
-          channel.queueDeclare(queueName, false, false, false, null);
+          // Set up the channel with exchange and queue
+          String exchangeName = (String) rabbitMq.get("exchange");
+          String dataSource = metadata.get("sourceName");
+          String sensorName = metadata.get("sensorName");
+          String routingKey = "stucco.in." + dataSource;
+          if (sensorName != null) {
+              routingKey = routingKey + "." + sensorName;
+          }
           
-          //convert content into bytes
-          byte[] messageBytes = msgString.getBytes();
+          Channel channel = connection.createChannel();
+          channel.exchangeDeclare(exchangeName, "topic", true, false, false, null);
           
           // Send the file as a message
-          channel.basicPublish("", queueName, builder.build(), messageBytes);
+          channel.basicPublish(exchangeName, routingKey, builder.build(), messageBytes);
           
           //TODO: write to log the first N bytes of the message
           System.out.println(" [x] Sent message ");
@@ -106,7 +87,7 @@ public class QueueSender {
     
     static public void main(String[] args) {
       QueueSender sender = new QueueSender();
-      sender.send("test.txt\nA test message from the queue sender\n");
+      //sender.send("test.txt\nA test message from the queue sender\n"); //TODO
     }
 
     public void setDocService(DocServiceClient docServiceClient) {

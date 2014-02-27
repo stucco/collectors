@@ -15,16 +15,6 @@ public class CollectorFileImpl extends CollectorAbstractBase {
     /** file from which we are obtaining content*/
     private File m_filename;
     
-    /** content of the message to be sent */
-    private String m_msgContent;
-    
-    /** raw content going into the message */
-    private byte[] m_rawContent;
-    
-    /** time the data was collected */
-    private Date m_timestamp = null;
-    
-    
     /** Sets up a sender for a directory. */
     public CollectorFileImpl(Map<String, String> configData) {
       super(configData);
@@ -42,7 +32,6 @@ public class CollectorFileImpl extends CollectorAbstractBase {
     @Override
     public void collect() {
         collectOnly();
-        m_msgContent = prepMessage(m_filename.getName(), getRawContent());
         send();
         clean();
     }
@@ -66,11 +55,6 @@ public class CollectorFileImpl extends CollectorAbstractBase {
         System.err.println("Unable to collect '" + m_filename.toString() + "' because of IOException");
       }
     }
-    
-    /** Sends the content. */
-    public void send() {
-        m_queueSender.send(m_msgContent);
-    }
         
     /** Reads the contents of a file. */
     public byte[] readFile(File file) throws IOException {
@@ -83,23 +67,9 @@ public class CollectorFileImpl extends CollectorAbstractBase {
         return content;
     }
     
-    /**
-     * Preparing the message we will send into the queue
-     * @param URI         URI of the file
-     * @param rawContent  Byte content of the file
-     * 
-     * @return JSON encoding of the URI and content (which is itself 
-     * base64-encoded within the JSON) 
-     */
-    private String prepMessage(String URI, byte[] rawContent) {
-        String jsonContent = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
-        return jsonContent;
-    }
-
     @Override
     public void clean() {
         m_rawContent = null;
-        m_msgContent = null;
     }  
     
 }

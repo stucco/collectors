@@ -17,17 +17,7 @@ import java.util.Map;
 
 public class CollectorFileByLineImpl extends CollectorAbstractBase implements Runnable {
     /** file from which we are obtaining content*/
-    private File m_filename;
-    
-    /** content of the message to be sent */
-    private String m_msgContent;
-    
-    /** raw content going into the message */
-    private byte[] m_rawContent;
-    
-    /** time the data was collected */
-    private Date m_timestamp = null;
-    
+    private File m_filename; 
     
     /** Sets up a sender for a directory. */
     public CollectorFileByLineImpl(Map<String, String> configData) {
@@ -63,7 +53,6 @@ public class CollectorFileByLineImpl extends CollectorAbstractBase implements Ru
             while ((aLine = aBufferedReader.readLine()) != null) {
                 m_rawContent = aLine.getBytes();
                 m_timestamp = new Date();
-                m_msgContent = prepMessage(m_filename.getName(), m_rawContent);
                 send();
             }
             clean();
@@ -86,28 +75,9 @@ public class CollectorFileByLineImpl extends CollectorAbstractBase implements Ru
         return m_rawContent;
     }
     
-    /** Sends the content. */
-    public void send() {
-        m_queueSender.send(m_msgContent);
-    }
-    
-    /**
-     * Preparing the message we will send into the queue
-     * @param URI         URI of the file
-     * @param rawContent  Byte content of the file
-     * 
-     * @return JSON encoding of the URI and content (which is itself 
-     * base64-encoded within the JSON) 
-     */
-    private String prepMessage(String URI, byte[] rawContent) {
-        String jsonContent = m_contentConverter.convertContent(URI, rawContent, m_timestamp);
-        return jsonContent;
-    }
-
     @Override
     public void clean() {
         m_rawContent = null;
-        m_msgContent = null;
     }
 
     @Override
