@@ -55,7 +55,7 @@ public class Config {
             else if (configUrl != null) {
                 // Use config service
                 StuccoClient client = new StuccoClientImpl(configUrl);
-                config = client.listNested("/stucco");
+                config = client.listNested("/");
             }
         } 
         catch (IOException e) {
