@@ -70,7 +70,7 @@ public class FileReceiver {
   private QueueingConsumer initConsumer() throws IOException {
     // Create a connection with one channel
     ConnectionFactory factory = new ConnectionFactory();
-    String host = (String) rabbitMq.get("/rabbitmq/host");
+    String host = (String) rabbitMq.get("host");
     factory.setHost(host);
     Connection connection = factory.newConnection();
     Channel channel = connection.createChannel();
@@ -123,7 +123,11 @@ public class FileReceiver {
     String message = new String(delivery.getBody());
     String routingKey = delivery.getEnvelope().getRoutingKey();
 
-    System.out.println(" [x] Received '" + routingKey + "':'" + message + "'");
+    String printedStr = message;
+    if (printedStr.length() > 20) {
+        printedStr = printedStr.substring(0, 20) + "...";
+    }
+    System.out.println(" [x] Received '" + routingKey + "':'" + printedStr + "'");
     
     BasicProperties properties = delivery.getProperties();
     Map<String, Object> headers = properties.getHeaders();
@@ -137,6 +141,7 @@ public class FileReceiver {
         String hasContent = headers.get("content").toString();
         if (hasContent.equals("false")) {
             String docId = message;
+            System.err.printf("Fetching doc %s from document-service%n", docId);
             DocumentObject doc = docServiceClient.fetch(docId);
             if (filename.isEmpty()) {
                 filename = docId;

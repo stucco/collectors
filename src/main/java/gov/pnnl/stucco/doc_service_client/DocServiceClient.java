@@ -43,8 +43,8 @@ public class DocServiceClient {
      */
     public DocServiceClient(Map<String, Object> config) {
         if( config != null) {             
-            this.host = (String) config.get("/stucco/document-service/host");
-            String portStr = (String) config.get("/stucco/document-service/port");
+            this.host = (String) config.get("host");
+            String portStr = (String) config.get("port");
             this.port = Integer.parseInt(portStr);
         }
     }

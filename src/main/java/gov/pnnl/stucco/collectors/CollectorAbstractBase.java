@@ -36,8 +36,9 @@ public abstract class CollectorAbstractBase implements Collector {
         m_metadata.put("sourceName", configData.get("source-name"));
         m_metadata.put("sourceUrl", configData.get("source-URI"));
         
-        Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap().get("default");
-        Map<String, Object> docServiceConfig = (Map<String, Object>) defaultSection.get("document-service");
+        Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
+        Map<String, Object> stuccoMap = (Map<String, Object>) configMap.get("stucco");
+        Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoMap.get("document-service");
         
         DocServiceClient docServiceClient = new DocServiceClient(docServiceConfig);
         

@@ -22,7 +22,7 @@ public class QueueSender {
     /** Sets up a sender*/
     @SuppressWarnings("unchecked")
     public QueueSender() {
-        Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap().get("default");
+        Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap();
         rabbitMq = (Map<String, Object>) defaultSection.get("rabbitmq");
     }
     
@@ -32,7 +32,15 @@ public class QueueSender {
       
       try {
           byte[] messageBytes = rawContent;
-          int maxMessageSize = (Integer) rabbitMq.get("message_size_limit");
+          String maxMessageSizeStr = (String) rabbitMq.get("message_size_limit");
+          int maxMessageSize = 10000000;
+          try {
+              maxMessageSize = Integer.parseInt(maxMessageSizeStr);
+          } 
+          catch (NumberFormatException e) {
+              // Just use the default
+              System.err.println("Message size limit invalid; using default");
+          }
           
           if (rawContent.length > maxMessageSize) {
               String docId = docServiceClient.store(rawContent, metadata.get("contentType"));              

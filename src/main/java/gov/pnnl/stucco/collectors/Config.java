@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collection;
 import java.util.Map;
 
 import jetcd.EtcdException;
@@ -64,6 +65,7 @@ public class Config {
                 Yaml yaml = new Yaml();
                 InputStream input = new FileInputStream(configFile);
                 Map<String, Object> yamlConfig = (Map<String, Object>) yaml.load(input);
+                convertYamlObjectsToString(yamlConfig);
                 
                 config = (Map<String, Object>) yamlConfig.get("default");
             }
@@ -89,6 +91,26 @@ public class Config {
         } 
         catch (EtcdException e) {
             System.err.printf("Unable to read from config URL %s%n", configUrl);
+        }
+    }
+    
+    /** 
+     * Modifies a configuration map acquired from a Yaml.load(), to replace
+     * non-String values with their toString() equivalents.
+     */
+    private void convertYamlObjectsToString(Map<String, Object> configMap) {
+        for (Map.Entry<String, Object> entry : configMap.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+            if (value instanceof Map) {
+                // Submap, so recursively convert it
+                Map<String, Object> submap = (Map<String, Object>) value;
+                convertYamlObjectsToString(submap);
+            }
+            else if (!(value instanceof String) && !(value instanceof Collection)) {
+                // Convert non-String value to String
+                entry.setValue(value.toString());
+            }
         }
     }
     
