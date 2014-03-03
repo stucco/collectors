@@ -29,10 +29,19 @@ public class Replayer {
 	private String outputDir = "";
     
     
+	/** 
+	 * Creates the Replayer.
+	 * 
+	 * @param configData  
+	 * The master configuration map
+	 * 
+	 * @param section
+	 * The section within the map, either "replayer-file" or "replayer-config"
+	 */
     @SuppressWarnings("unchecked")
-	Replayer( Map<String, Object> configData)
+	Replayer( Map<String, Object> configData, String section)
     {
-        Map<String,Object> replayerConfig = (Map<String, Object>) configData.get("replayer");
+        Map<String,Object> replayerConfig = (Map<String, Object>) configData.get(section);
         Collection<Object> collectorConfig = (Collection<Object>) replayerConfig.get("collectors");
         for(Object obj : collectorConfig) {
             Map<String, String> cc = (Map<String, String>) obj;
@@ -63,6 +72,7 @@ public class Replayer {
             CommandLine parser = new CommandLine();
             parser.add1("-file");
             parser.add1("-url");
+            parser.add1("-section");
             parser.parse(args);
             
             if (parser.found("-file")  &&  parser.found("-url")) {
@@ -77,15 +87,20 @@ public class Replayer {
                 Config.setConfigUrl(configUrl);
             }
             
+            String section = "replayer-file";
+            if (parser.found("-section")) {
+                section = parser.getValue();
+            }
+            
             // Get the configuration data
             Map<String, Object> config = Config.getMap();
 
             // get the content and play it
-            Replayer replay = new Replayer(config);
+            Replayer replay = new Replayer(config, section);
             replay.play();
         } 
         catch (UsageException e) {
-            System.err.println("Usage: Replayer (-file configFile | -url configUrl)");
+            System.err.println("Usage: Replayer -section ('replayer-web' | 'replayer-file') (-file configFile | -url configUrl)");
             System.exit(1);
         }
     }

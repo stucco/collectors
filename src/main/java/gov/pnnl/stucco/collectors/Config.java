@@ -28,26 +28,27 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class Config {
     
-    /**
-     * File holding configuration data. This should get set but is given a
-     * default.
-     */
-    static private File configFile = null;//new File("./config/data-sources.yml");
-    
+    /** Singleton instance of Config. We may revisit this. */
+    static private Config instance;
+
+    /** URL pointing to configuration service. */
     static private String configUrl = null;
     
-    static private Config instance;
+    /** File holding configuration data, as alternative to using configuration service. */
+    static private File configFile = null;
     
+    /** Configuration map retrieved from either the config service or a YAML file. */
     private Map<String, Object> config = null;
     
+    
+    /** Sets the configuration service URL. */
+    public static void setConfigUrl(String url) {
+        configUrl = url;
+    }
     
     /** Sets the configuration file. */
     public static void setConfigFile(File f) {
         configFile = f;
-    }
-    
-    public static void setConfigUrl(String url) {
-        configUrl = url;
     }
     
     @SuppressWarnings("unchecked")
@@ -70,13 +71,19 @@ public class Config {
                 config = (Map<String, Object>) yamlConfig.get("default");
             }
             else {
-                
                 if (configUrl == null) {
+                    // No URL specified, use environment vars or defaults for host:port
+                    
                     String host = System.getenv("ETCD_HOST");
-                    String port = System.getenv("ETCD_PORT");
-                    if (host == null || port == null) {
-                        throw new EtcdException(1, "", "Missing URL and environment variables", 0);
+                    if (host == null) {
+                        host = "localhost";
                     }
+                    
+                    String port = System.getenv("ETCD_PORT");
+                    if (port == null) {
+                        port = "4001";
+                    }
+                    
                     configUrl = String.format("http://%s:%s", host, port);
                 }
                 
@@ -100,7 +107,6 @@ public class Config {
      */
     private void convertYamlObjectsToString(Map<String, Object> configMap) {
         for (Map.Entry<String, Object> entry : configMap.entrySet()) {
-            String key = entry.getKey();
             Object value = entry.getValue();
             if (value instanceof Map) {
                 // Submap, so recursively convert it
@@ -150,15 +156,11 @@ public class Config {
 
             // Get the configuration data
             Map<String, Object> config = Config.getMap();
-            
-            System.err.println("Top-level keys = " + config.keySet());
-            
         } 
         catch (UsageException e) {
             System.err.println("Usage: Replayer (-file configFile | -url configUrl)");
             System.exit(1);
         }
-        
     }
     
 }
