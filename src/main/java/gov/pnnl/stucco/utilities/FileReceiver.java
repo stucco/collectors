@@ -136,7 +136,6 @@ public class FileReceiver {
         return new String[] {filename, content};
     }
     
-    filename = FilenameUtils.getName(headers.get("sourceUrl").toString());
     try {
         String hasContent = headers.get("HasContent").toString();
         if (hasContent.equals("false")) {
