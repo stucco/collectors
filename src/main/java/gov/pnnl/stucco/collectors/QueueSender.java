@@ -53,8 +53,7 @@ public class QueueSender {
           // Build AMPQ Basic Properties
           AMQP.BasicProperties.Builder builder = new AMQP.BasicProperties.Builder();
           Map<String, Object> headers = new HashMap<String, Object>();
-          headers.put("content", metadata.get("content"));
-          headers.put("sourceUrl", metadata.get("sourceUrl"));
+          headers.put("HasContent", metadata.get("content"));
           
           builder.contentType(metadata.get("contentType"));
           builder.deliveryMode(2 /*persistent*/);

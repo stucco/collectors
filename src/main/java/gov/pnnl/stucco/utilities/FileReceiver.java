@@ -138,7 +138,7 @@ public class FileReceiver {
     
     filename = FilenameUtils.getName(headers.get("sourceUrl").toString());
     try {
-        String hasContent = headers.get("content").toString();
+        String hasContent = headers.get("HasContent").toString();
         if (hasContent.equals("false")) {
             String docId = message;
             System.err.printf("Fetching doc %s from document-service%n", docId);
