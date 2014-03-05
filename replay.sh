@@ -1,2 +1,3 @@
 #!/bin/bash
-java -Xmx2048m -jar target/replayer.jar
+cd target
+java -Xmx2048m -jar replayer.jar
