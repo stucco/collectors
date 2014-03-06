@@ -1,3 +1,2 @@
 #!/bin/bash
-cd target
-java -Xmx2048m -jar file_receiver.jar
+java -Xmx2048m -jar /stucco/collectors/target/file_receiver.jar

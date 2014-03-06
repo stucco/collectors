@@ -17,6 +17,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.xml.bind.DatatypeConverter;
 
@@ -90,21 +91,23 @@ public class FileReceiver {
     
     return consumer;
   }
-  
+ 
+  private class MessageStruct {
+    public String filename = "";
+    public byte[] content;
+  }; 
+
   /** Process received messages until there's an interrupt. */
   private void processMessagesForever(QueueingConsumer consumer) throws InterruptedException {
     while (true) {
       // Get a message's contents
-      String[] messagePart = unwrapMessage(consumer);
-      String filename = messagePart[0];
-      String content  = messagePart[1];
-      byte[] byteContent = DatatypeConverter.parseBase64Binary(content);
-      
+      MessageStruct msgStruct = unwrapMessage(consumer);
+
       // Save the received file
-      File f = new File(directory, filename);
+      File f = new File(directory, msgStruct.filename);
       try {
-        System.out.println("     Writing file '" + filename + "'");
-        writeFile(f, byteContent);
+        System.out.println("     Writing file '" + msgStruct.filename + "'");
+        writeFile(f, msgStruct.content);
       }
       catch (IOException e) {
         System.err.println("Unable to save file '" + f + "' because of IOException");
@@ -114,10 +117,9 @@ public class FileReceiver {
   }
 
   /** Extract the content from a message. */
-  private String[] unwrapMessage(QueueingConsumer consumer) throws InterruptedException {
-    String filename = "";
-    String content = "";
-      
+  private MessageStruct unwrapMessage(QueueingConsumer consumer) throws InterruptedException {
+    MessageStruct msgStruct = new MessageStruct();
+  
     // Get a message from a delivery
     QueueingConsumer.Delivery delivery = consumer.nextDelivery();
     String message = new String(delivery.getBody());
@@ -133,7 +135,8 @@ public class FileReceiver {
     Map<String, Object> headers = properties.getHeaders();
     
     if (headers == null) {
-        return new String[] {filename, content};
+        System.err.println("null headers");
+        return msgStruct;
     }
     
     try {
@@ -142,18 +145,17 @@ public class FileReceiver {
             String docId = message;
             System.err.printf("Fetching doc %s from document-service%n", docId);
             DocumentObject doc = docServiceClient.fetch(docId);
-            if (filename.isEmpty()) {
-                filename = docId;
-            }
-            content = DatatypeConverter.printBase64Binary(doc.getDataAsBytes());
+            msgStruct.filename = docId;
+            msgStruct.content = doc.getDataAsBytes();
         } else {
-            content = DatatypeConverter.printBase64Binary(message.getBytes());
+            msgStruct.filename = UUID.randomUUID().toString();
+            msgStruct.content = message.getBytes();
         }
     } 
     catch (DocServiceException e) {
         e.printStackTrace();
     }
-    return new String[] {filename, content};
+    return msgStruct;
   }
 
   /** 
