@@ -58,7 +58,8 @@ public class QueueSender {
           builder.contentType(metadata.get("contentType"));
           builder.deliveryMode(2 /*persistent*/);
           builder.headers(headers);
-          
+          builder.timestamp(new java.util.Date());
+ 
           // Set up the connection
           ConnectionFactory factory = new ConnectionFactory();
           String host = (String) rabbitMq.get("host");
