@@ -52,7 +52,11 @@ public class FileReceiver {
       Map<String, Object> stuccoConfig = (Map<String, Object>) configMap.get("stucco");
       Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoConfig.get("document-service");
 
-      docServiceClient = new DocServiceClient(docServiceConfig);
+      try {
+        docServiceClient = new DocServiceClient(docServiceConfig);
+      } catch (DocServiceException e) {
+        e.printStackTrace();
+      }
   }
   
   public void receive() {

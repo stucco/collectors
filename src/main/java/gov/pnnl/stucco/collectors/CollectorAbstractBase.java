@@ -39,11 +39,15 @@ public abstract class CollectorAbstractBase implements Collector {
         Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
         Map<String, Object> stuccoMap = (Map<String, Object>) configMap.get("stucco");
         Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoMap.get("document-service");
+       
+        try {
+            DocServiceClient docServiceClient = new DocServiceClient(docServiceConfig);
         
-        DocServiceClient docServiceClient = new DocServiceClient(docServiceConfig);
-        
-        // we create a delegate for queueSender
-        m_queueSender.setDocService(docServiceClient);
+            // we create a delegate for queueSender
+            m_queueSender.setDocService(docServiceClient);
+        } catch (DocServiceException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
