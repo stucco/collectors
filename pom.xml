@@ -43,8 +43,12 @@
 			<artifactId>jetcd</artifactId>
 			<version>0.3.0-SNAPSHOT</version>
 		</dependency>
+		<dependency>
+			<groupId>gov.pnnl.stucco</groupId>
+			<artifactId>doc-server-client-java</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 	</dependencies>
-	
 	<build>
 	<finalName>${project.artifactId}</finalName>
 	<plugins>
@@ -88,8 +92,17 @@
           	   <target>1.7</target>
         	</configuration>
          </plugin>
-
-  </plugins>
+         <plugin>
+              <groupId>org.apache.maven.plugins</groupId>
+              <artifactId>maven-scm-plugin</artifactId>
+              <version>1.9</version>
+              <configuration>
+                  <connectionUrl>scm:git:https://github.com/stucco/${module.name}.git</connectionUrl>
+                  <checkoutDirectory>${module.name}</checkoutDirectory>
+                  <goals>install</goals>
+              </configuration>
+          </plugin>
+	</plugins>
 	</build>
 
 	<pluginRepositories>
