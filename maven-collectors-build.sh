@@ -5,7 +5,6 @@ mvn --non-recursive scm:bootstrap -Dmodule.name=etcd-java
 mvn --non-recursive scm:bootstrap -Dmodule.name=document-service-client-java
 
 # build collectors
-cd ..
 mvn clean install
 
 rm -rf etcd-java
