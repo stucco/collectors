@@ -1,10 +1,11 @@
 package gov.pnnl.stucco.utilities;
+
 /**
  * $OPEN_SOURCE_DISCLAIMER$
  */
 import gov.pnnl.stucco.collectors.Config;
+import gov.pnnl.stucco.collectors.QueueSender;
 import gov.pnnl.stucco.utilities.CommandLine.UsageException;
-
 import gov.pnnl.stucco.doc_service_client.DocServiceClient;
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
 import gov.pnnl.stucco.doc_service_client.DocumentObject;
@@ -24,6 +25,8 @@ import javax.xml.bind.DatatypeConverter;
 import org.apache.commons.io.FilenameUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.rabbitmq.client.AMQP.BasicProperties;
 import com.rabbitmq.client.Channel;
@@ -32,186 +35,182 @@ import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 
 public class FileReceiver {
-  /** Client to fetch documents from document-service */
-  DocServiceClient docServiceClient;
-  
-  /** Configuration for RabbitMQ. */
-  private Map<String, Object> rabbitMq;
+    private static final Logger logger = LoggerFactory.getLogger(FileReceiver.class);
 
-  /** Directory in which to write received files. */
-  private File directory;
-  
-  
-  @SuppressWarnings("unchecked")
-  public FileReceiver(File dir) {
-      directory = dir;
+    /** Client to fetch documents from document-service */
+    DocServiceClient docServiceClient;
 
-      Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
-      rabbitMq = (Map<String, Object>) configMap.get("rabbitmq");
-      
-      Map<String, Object> stuccoConfig = (Map<String, Object>) configMap.get("stucco");
-      Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoConfig.get("document-service");
+    /** Configuration for RabbitMQ. */
+    private Map<String, Object> rabbitMq;
 
-      try {
-        docServiceClient = new DocServiceClient(docServiceConfig);
-      } catch (DocServiceException e) {
-        e.printStackTrace();
-      }
-  }
-  
-  public void receive() {
-    try {
-      QueueingConsumer consumer = initConsumer();
-      processMessagesForever(consumer);
+    /** Directory in which to write received files. */
+    private File directory;
+
+    @SuppressWarnings("unchecked")
+    public FileReceiver(File dir) {
+        directory = dir;
+
+        Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
+        rabbitMq = (Map<String, Object>) configMap.get("rabbitmq");
+
+        Map<String, Object> stuccoConfig = (Map<String, Object>) configMap.get("stucco");
+        Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoConfig.get("document-service");
+
+        try {
+            docServiceClient = new DocServiceClient(docServiceConfig);
+        } catch (DocServiceException e) {
+            e.printStackTrace();
+        }
     }
-    catch (IOException ioe) {
-      ioe.printStackTrace();
+
+    public void receive() {
+        try {
+            QueueingConsumer consumer = initConsumer();
+            processMessagesForever(consumer);
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } catch (InterruptedException e) {
+            // Terminated
+        }
     }
-    catch (InterruptedException e) {
-      // Terminated
+
+    private QueueingConsumer initConsumer() throws IOException {
+        // Create a connection with one channel
+        ConnectionFactory factory = new ConnectionFactory();
+        String host = (String) rabbitMq.get("host");
+        factory.setHost(host);
+        Connection connection = factory.newConnection();
+        Channel channel = connection.createChannel();
+
+        // Set up a queue for the channel
+        final String EXCHANGE_NAME = "stucco";
+        channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, false, false, null);
+        String queueName = channel.queueDeclare().getQueue();
+        channel.queueBind(queueName, EXCHANGE_NAME, "stucco.in.#");
+
+        logger.info(" [*] Waiting for messages. Interrupt to stop.");
+
+        // TODO: Replace this? The RabbitMQ documentation says it's deprecated.
+        // (though it isn't actually tagged with @deprecated.)
+        QueueingConsumer consumer = new QueueingConsumer(channel);
+        channel.basicConsume(queueName, true, consumer);
+
+        return consumer;
     }
-  }
 
-  private QueueingConsumer initConsumer() throws IOException {
-    // Create a connection with one channel
-    ConnectionFactory factory = new ConnectionFactory();
-    String host = (String) rabbitMq.get("host");
-    factory.setHost(host);
-    Connection connection = factory.newConnection();
-    Channel channel = connection.createChannel();
+    private class MessageStruct {
+        public String filename = "";
+        public byte[] content;
+    };
 
-    // Set up a queue for the channel
-    final String EXCHANGE_NAME = "stucco";
-    channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, false, false, null);
-    String queueName = channel.queueDeclare().getQueue();
-    channel.queueBind(queueName, EXCHANGE_NAME, "stucco.in.#");
-    
-    System.out.println(" [*] Waiting for messages. Interrupt to stop.");
+    /** Process received messages until there's an interrupt. */
+    private void processMessagesForever(QueueingConsumer consumer) throws InterruptedException {
+        while (true) {
+            // Get a message's contents
+            MessageStruct msgStruct = unwrapMessage(consumer);
 
-    // TODO: Replace this? The RabbitMQ documentation says it's deprecated.
-    // (though it isn't actually tagged with @deprecated.) 
-    QueueingConsumer consumer = new QueueingConsumer(channel);
-    channel.basicConsume(queueName, true, consumer);
-    
-    return consumer;
-  }
- 
-  private class MessageStruct {
-    public String filename = "";
-    public byte[] content;
-  }; 
+            // Save the received file
+            File f = new File(directory, msgStruct.filename);
+            try {
+               logger.info("     Writing file '" + msgStruct.filename + "'");
+                writeFile(f, msgStruct.content);
+            } catch (IOException e) {
+                logger.error("Unable to save file '" + f + "' because of IOException");
+            }
 
-  /** Process received messages until there's an interrupt. */
-  private void processMessagesForever(QueueingConsumer consumer) throws InterruptedException {
-    while (true) {
-      // Get a message's contents
-      MessageStruct msgStruct = unwrapMessage(consumer);
-
-      // Save the received file
-      File f = new File(directory, msgStruct.filename);
-      try {
-        System.out.println("     Writing file '" + msgStruct.filename + "'");
-        writeFile(f, msgStruct.content);
-      }
-      catch (IOException e) {
-        System.err.println("Unable to save file '" + f + "' because of IOException");
-      }
-      
+        }
     }
-  }
 
-  /** Extract the content from a message. */
-  private MessageStruct unwrapMessage(QueueingConsumer consumer) throws InterruptedException {
-    MessageStruct msgStruct = new MessageStruct();
-  
-    // Get a message from a delivery
-    QueueingConsumer.Delivery delivery = consumer.nextDelivery();
-    String message = new String(delivery.getBody());
-    String routingKey = delivery.getEnvelope().getRoutingKey();
+    /** Extract the content from a message. */
+    private MessageStruct unwrapMessage(QueueingConsumer consumer) throws InterruptedException {
+        MessageStruct msgStruct = new MessageStruct();
 
-    String printedStr = message;
-    if (printedStr.length() > 20) {
-        printedStr = printedStr.substring(0, 20) + "...";
-    }
-    System.out.println(" [x] Received '" + routingKey + "':'" + printedStr + "'");
-    
-    BasicProperties properties = delivery.getProperties();
-    Map<String, Object> headers = properties.getHeaders();
-    
-    if (headers == null) {
-        System.err.println("null headers");
+        // Get a message from a delivery
+        QueueingConsumer.Delivery delivery = consumer.nextDelivery();
+        String message = new String(delivery.getBody());
+        String routingKey = delivery.getEnvelope().getRoutingKey();
+
+        String printedStr = message;
+        if (printedStr.length() > 20) {
+            printedStr = printedStr.substring(0, 20) + "...";
+        }
+        logger.info(" [x] Received '" + routingKey + "':'" + printedStr + "'");
+
+        BasicProperties properties = delivery.getProperties();
+        Map<String, Object> headers = properties.getHeaders();
+
+        if (headers == null) {
+            logger.error("null headers");
+            return msgStruct;
+        }
+
+        try {
+            String hasContent = headers.get("HasContent").toString();
+            if (hasContent.equals("false")) {
+                String docId = message;
+                System.err.printf("Fetching doc %s from document-service%n", docId);
+                DocumentObject doc = docServiceClient.fetch(docId);
+                msgStruct.filename = docId;
+                msgStruct.content = doc.getDataAsBytes();
+            } else {
+                msgStruct.filename = UUID.randomUUID().toString();
+                msgStruct.content = message.getBytes();
+            }
+        } catch (DocServiceException e) {
+            e.printStackTrace();
+        }
         return msgStruct;
     }
-    
-    try {
-        String hasContent = headers.get("HasContent").toString();
-        if (hasContent.equals("false")) {
-            String docId = message;
-            System.err.printf("Fetching doc %s from document-service%n", docId);
-            DocumentObject doc = docServiceClient.fetch(docId);
-            msgStruct.filename = docId;
-            msgStruct.content = doc.getDataAsBytes();
-        } else {
-            msgStruct.filename = UUID.randomUUID().toString();
-            msgStruct.content = message.getBytes();
+
+    /**
+     * Writes a file to the Receive directory.
+     * 
+     * @param f
+     *            File to write
+     * @param content
+     *            Content of file
+     */
+    private void writeFile(File f, byte[] content) throws IOException {
+        OutputStream out = null;
+        try {
+            out = new BufferedOutputStream(new FileOutputStream(f));
+            out.write(content);
+
+        } finally {
+            if (out != null) {
+                out.close();
+            }
         }
-    } 
-    catch (DocServiceException e) {
-        e.printStackTrace();
     }
-    return msgStruct;
-  }
 
-  /** 
-   * Writes a file to the Receive directory. 
-   * 
-   * @param f        File to write
-   * @param content  Content of file
-   */
-  private void writeFile(File f, byte[] content) throws IOException {
-      OutputStream out = null;
-      try {
-          out = new BufferedOutputStream(new FileOutputStream(f));
-          out.write(content);
-          
-      }
-      finally {
-          if (out != null) {
-              out.close();
-          }
-      }
-  }
+    public static void main(String[] args) throws Exception {
+        try {
+            CommandLine parser = new CommandLine();
+            parser.add1("-file");
+            parser.add1("-url");
+            parser.parse(args);
 
-  public static void main(String[] args) throws Exception {
-      try {
-          CommandLine parser = new CommandLine();
-          parser.add1("-file");
-          parser.add1("-url");
-          parser.parse(args);
-          
-          if (parser.found("-file")  &&  parser.found("-url")) {
-              throw new UsageException("Can't specify both file and URL");
-          }
-          else if (parser.found("-file")) {
-              // Set up config to be from file
-              String configFilename = parser.getValue();
-              Config.setConfigFile(new File(configFilename));
-          }
-          else if (parser.found("-url")) {
-              // Set up config to be from service
-              String configUrl = parser.getValue();
-              Config.setConfigUrl(configUrl);
-          }
-          
-          // Receive content. Uses config, so must be done after config source is established.
-          File receiveDir = new File("data/Receive");
-          FileReceiver receiver = new FileReceiver(receiveDir);
-          receiver.receive();
-      } 
-      catch (UsageException e) {
-          System.err.println("Usage: FileReceiver (-file configFile | -url configUrl)");
-          System.exit(1);
-      }
-  }
+            if (parser.found("-file") && parser.found("-url")) {
+                throw new UsageException("Can't specify both file and URL");
+            } else if (parser.found("-file")) {
+                // Set up config to be from file
+                String configFilename = parser.getValue();
+                Config.setConfigFile(new File(configFilename));
+            } else if (parser.found("-url")) {
+                // Set up config to be from service
+                String configUrl = parser.getValue();
+                Config.setConfigUrl(configUrl);
+            }
+
+            // Receive content. Uses config, so must be done after config source
+            // is established.
+            File receiveDir = new File("data/Receive");
+            FileReceiver receiver = new FileReceiver(receiveDir);
+            receiver.receive();
+        } catch (UsageException e) {
+            System.err.println("Usage: FileReceiver (-file configFile | -url configUrl)");
+            System.exit(1);
+        }
+    }
 
 }

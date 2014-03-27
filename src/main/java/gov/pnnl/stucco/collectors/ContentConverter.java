@@ -18,6 +18,7 @@ import org.json.JSONObject;
  * takes the content and wraps it for transmission into the STUCCO pipeline
  * 
  * @author Shawn Bohn, August 2013
+ * @deprecated March 2014 We don't need this class to convert content to JSON anymore
  */
 
 public class ContentConverter { 

@@ -16,6 +16,7 @@ import com.rabbitmq.client.ConnectionFactory;
  * Each file has its filename prepended to the content in the message.
  * 
  * @author Grant Nakamura, August 2013
+ * @deprecated March 2014 This was a test class that isn't needed now that we used the message queue
  */
 public class DirectorySender {
 

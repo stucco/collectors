@@ -17,6 +17,8 @@ import java.util.Map;
 import jetcd.EtcdException;
 import jetcd.StuccoClientImpl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @author Shawn Bohn, Grant Nakamura; August 2013 
  */
 public class Config {
+    private static final Logger logger = LoggerFactory.getLogger(Config.class);
     
     /** Singleton instance of Config. We may revisit this. */
     static private Config instance;
@@ -94,10 +97,10 @@ public class Config {
             config = StuccoJetcdUtil.trimKeyPaths(config);
         } 
         catch (IOException e) {
-            System.err.printf("Configuration file %s not found%n", configFile);
+            logger.error("Configuration file %s not found%n", configFile, e);
         } 
         catch (EtcdException e) {
-            System.err.printf("Unable to read from config URL %s%n", configUrl);
+            logger.error("Unable to read from config URL %s%n", configUrl, e);
         }
     }
     
@@ -158,7 +161,7 @@ public class Config {
             Map<String, Object> config = Config.getMap();
         } 
         catch (UsageException e) {
-            System.err.println("Usage: Replayer (-file configFile | -url configUrl)");
+            System.err.println("Usage: Config (-file configFile | -url configUrl)");
             System.exit(1);
         }
     }
