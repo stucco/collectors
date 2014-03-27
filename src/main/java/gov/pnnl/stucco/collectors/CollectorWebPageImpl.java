@@ -18,7 +18,7 @@ import org.slf4j.LoggerFactory;
 
 
 public class CollectorWebPageImpl extends CollectorAbstractBase{
-    private static final Logger logger = LoggerFactory.getLogger(QueueSender.class);
+    private static final Logger logger = LoggerFactory.getLogger(CollectorWebPageImpl.class);
     
     /** URI from which we are obtaining content*/
     private String m_URI;
@@ -104,7 +104,7 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
             }
             catch (IOException ioe)
             {
-              logger.warn("Close failed", e);  
+              logger.warn("Close failed", ioe);  
             }
           }
         }
