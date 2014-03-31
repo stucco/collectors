@@ -83,7 +83,7 @@ public class FileReceiver {
         Channel channel = connection.createChannel();
 
         // Set up a queue for the channel
-        final String EXCHANGE_NAME = "stucco";
+        final String EXCHANGE_NAME = (String) rabbitMq.get("exchange");
         channel.exchangeDeclare(EXCHANGE_NAME, "topic", true, false, false, null);
         String queueName = channel.queueDeclare().getQueue();
         channel.queueBind(queueName, EXCHANGE_NAME, "stucco.in.#");

@@ -79,7 +79,10 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
           
           // using apache http components there is a easier way to do this conversion but for now we do it this way.
           SimpleDateFormat format = new SimpleDateFormat("EE, dd MMM yyyy HH:mm:ss zzz");
-          m_timestamp= format.parse(timestamp);
+          
+          if (timestamp != null)  { 
+              m_timestamp = format.parse(timestamp);
+          }
           
           // read the output from the server
           reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
