@@ -6,7 +6,7 @@
 	<groupId>gov.pnnl.stucco</groupId>
 	<artifactId>STUCCO</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
-
+	    
 	<dependencies>
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -39,15 +39,20 @@
 			<version>4.11</version>
 		</dependency>
 		<dependency>
-			<groupId>net.floatingsun</groupId>
-			<artifactId>jetcd</artifactId>
-			<version>0.3.0-SNAPSHOT</version>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-jdk14</artifactId>
+			<version>1.7.6</version>
 		</dependency>
-		<dependency>
-			<groupId>gov.pnnl.stucco</groupId>
-			<artifactId>doc-server-client-java</artifactId>
-			<version>1.0.0</version>
-		</dependency>
+        <dependency>
+            <groupId>gov.pnnl.stucco</groupId>
+            <artifactId>etcd-java</artifactId>
+            <version>0.2.0-SNAPSHOT</version>
+        </dependency> 
+        <dependency>
+            <groupId>gov.pnnl.stucco</groupId>
+            <artifactId>doc-server-client-java</artifactId>
+            <version>1.0.0</version>
+        </dependency> 
 	</dependencies>
 	<build>
 	<finalName>${project.artifactId}</finalName>

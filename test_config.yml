@@ -1,0 +1,53 @@
+default:
+  rabbitmq:
+    host: localhost
+    port: 5672
+    login: guest
+    password: guest
+    vhost: /
+    queue: collectors_test
+    exchange: collectors_test
+    message_size_limit: 10485760
+  stucco:
+    document-service:
+      host: 10.10.10.100
+      port: 8118
+      data:
+        dir: data
+      cluster: true
+      logs:
+        dir: logs
+        level: info
+  replayer-file-test:
+    collectors:
+      -
+        type: FILE
+        source-name: test
+        source-URI: data/Send/malwaredomains-domains-short.txt
+        content-type : text/plain
+    outputLog : ./replayer.log
+    outputDir : ./data/Receive
+
+  replayer-file-by-line-test:
+    collectors:
+      -
+        type: FILEBYLINE
+        source-name: test
+        source-URI: data/Send/malwaredomains-domains-short.txt
+        content-type : text/plain
+    outputLog : ./replayer.log
+    outputDir : ./data/Receive
+
+  replayer-web-test:
+    collectors:
+      -
+        type: WEB
+        source-name: test
+        source-URI: http://www.google.com
+        content-type : text/html
+    outputLog : ./replayer.log
+    outputDir : ./data/Receive
+  
+vagrant:
+  rabbitmq:
+    host: localhost

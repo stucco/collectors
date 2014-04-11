@@ -6,14 +6,17 @@ import java.util.Map;
 
 import gov.pnnl.stucco.doc_service_client.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
 /** Abstract base class used in implementing Collectors. */
 public abstract class CollectorAbstractBase implements Collector {
-    
-    protected final ContentConverter m_contentConverter = new ContentConverter();
+    private static final Logger logger = LoggerFactory.getLogger(CollectorAbstractBase.class);
+                    
     protected final Map<String, String> m_metadata = new HashMap<String, String>();
     protected final QueueSender m_queueSender           = new QueueSender();
     
@@ -46,7 +49,7 @@ public abstract class CollectorAbstractBase implements Collector {
             // we create a delegate for queueSender
             m_queueSender.setDocService(docServiceClient);
         } catch (DocServiceException e) {
-            e.printStackTrace();
+            logger.error("Could instantiate document-service client", e);
         }
     }
 

@@ -13,8 +13,13 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 public class CollectorWebPageImpl extends CollectorAbstractBase{
+    private static final Logger logger = LoggerFactory.getLogger(CollectorWebPageImpl.class);
+    
     /** URI from which we are obtaining content*/
     private String m_URI;
         
@@ -40,7 +45,7 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
         }
         catch (Exception e) 
         {
-            System.out.println("Exception: " + e.toString());
+            logger.error("Exception raised while reading web page", e);
         }
         
     }
@@ -69,21 +74,16 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
           connection.setReadTimeout(15*1000);
           connection.connect();
           
-          long contentLength = Long.parseLong(connection.getHeaderField("Content-Length"));
           m_metadata.put("contentType", connection.getHeaderField("Content-Type"));
           String timestamp = connection.getHeaderField("Last-Modified");
           
           // using apache http components there is a easier way to do this conversion but for now we do it this way.
           SimpleDateFormat format = new SimpleDateFormat("EE, dd MMM yyyy HH:mm:ss zzz");
-          m_timestamp= format.parse(timestamp);
           
-          
-          if(contentLength > Long.MAX_VALUE) {
-              // we can't store that much on the return from the call, now what do we do?
-              System.out.println("Returning content from '" + URI + "' is to large");
-              // throw??
+          if (timestamp != null)  { 
+              m_timestamp = format.parse(timestamp);
           }
-
+          
           // read the output from the server
           reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
           stringBuilder = new StringBuilder();
@@ -94,11 +94,6 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
             stringBuilder.append(line + "\n");
           }
           return stringBuilder.toString();
-        }
-        catch (Exception e)
-        {
-          e.printStackTrace();
-          throw e;
         }
         finally
         {
@@ -112,7 +107,7 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
             }
             catch (IOException ioe)
             {
-              ioe.printStackTrace();
+              logger.warn("Close failed", ioe);  
             }
           }
         }
