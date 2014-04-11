@@ -13,6 +13,8 @@ test_count=0
 pass_count=0
 fail_count=0
 
+mkdir -p $RECEIVE_DIR
+
 echo "Starting File Receiver..."
 java -Xmx2048m -jar target/file_receiver.jar -file $CONFIG &
 file_receiver_pid=$!
