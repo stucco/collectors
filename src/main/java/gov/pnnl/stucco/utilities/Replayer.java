@@ -26,20 +26,20 @@ public class Replayer {
     /** The Collectors being managed by this Replayer. */
     private List<Collector> collectors = new ArrayList<Collector>();
     
-	private String outputDir = "";
+    private String outputDir = "";
     
     
-	/** 
-	 * Creates the Replayer.
-	 * 
-	 * @param configData  
-	 * The master configuration map
-	 * 
-	 * @param section
-	 * The section within the map, either "replayer-file" or "replayer-config"
-	 */
+    /** 
+     * Creates the Replayer.
+     * 
+     * @param configData  
+     * The master configuration map
+     * 
+     * @param section
+     * The section within the map, either "replayer-file" or "replayer-web"
+     */
     @SuppressWarnings("unchecked")
-	Replayer( Map<String, Object> configData, String section)
+    Replayer( Map<String, Object> configData, String section)
     {
         Map<String,Object> replayerConfig = (Map<String, Object>) configData.get(section);
         Collection<Object> collectorConfig = (Collection<Object>) replayerConfig.get("collectors");
@@ -67,8 +67,8 @@ public class Replayer {
     /**
      * Main program to replay a downloaded or previously saved forensic data. 
      */
-	static public void main(String[] args) {
-	    try {
+    static public void main(String[] args) {
+        try {
             CommandLine parser = new CommandLine();
             parser.add1("-file");
             parser.add1("-url");
