@@ -1,6 +1,5 @@
 package gov.pnnl.stucco.collectors;
 
-import java.io.File;
 import java.util.Map;
 
 /**
@@ -29,7 +28,8 @@ public class CollectorFactory {
             CollectorDirectoryImpl dirCollector = new CollectorDirectoryImpl(configData);
             aCollector = dirCollector;
         } else if (collectorType.equalsIgnoreCase("RSS")) {
-            // TODO: 
+        	CollectorRssImpl rssCollector = new CollectorRssImpl(configData);
+        	aCollector = rssCollector;
         }
         
         return aCollector;

@@ -68,7 +68,9 @@ public abstract class CollectorAbstractBase implements Collector {
         }
     }
 
+    @Override
     public abstract void collect();
     
+    @Override
     public abstract void clean();
 }
