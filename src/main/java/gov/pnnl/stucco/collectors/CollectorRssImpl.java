@@ -48,14 +48,14 @@ public class CollectorRssImpl extends CollectorAbstractBase {
             // Retrieve the web page from each entry
             List<SyndEntryImpl> entries = feed.getEntries();
             for (SyndEntryImpl entry : entries) {
-                String uri = entry.getUri();
-                logger.info("Collecting RSS feed entry: " + uri);
+                String link = entry.getLink();
+                logger.info("Collecting RSS feed entry: " + link);
                 
                 // Set the configuration info needed by the web collector
                 webConfig.clear();
                 webConfig.put("type", "WEB");
                 webConfig.put("source-name", sourceName);
-                webConfig.put("source-URI", uri);
+                webConfig.put("source-URI", link);
                 webConfig.put("content-type", "text/html");
                 
                 // Use the web collector
