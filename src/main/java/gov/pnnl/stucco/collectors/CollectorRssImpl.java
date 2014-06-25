@@ -57,7 +57,8 @@ public class CollectorRssImpl extends CollectorAbstractBase {
                 webConfig.put("source-name", sourceName);
                 webConfig.put("source-URI", link);
                 webConfig.put("content-type", "text/html");
-                
+                webConfig.put("data-type", m_metadata.get("dataType")); 
+
                 // Use the web collector
                 Collector collector = CollectorFactory.makeCollector(webConfig);
                 collector.collect();

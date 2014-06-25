@@ -22,6 +22,7 @@ default:
     collectors:
       -
         type: FILE
+        data-type: structured
         source-name: test
         source-URI: data/Send/malwaredomains-domains-short.txt
         content-type : text/plain
@@ -32,6 +33,7 @@ default:
     collectors:
       -
         type: FILEBYLINE
+        data-type: structured
         source-name: test
         source-URI: data/Send/malwaredomains-domains-short.txt
         content-type : text/plain
@@ -42,6 +44,7 @@ default:
     collectors:
       -
         type: WEB
+        data-type: unstructured
         source-name: test
         source-URI: http://www.google.com
         content-type : text/html

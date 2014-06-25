@@ -36,6 +36,7 @@ public abstract class CollectorAbstractBase implements Collector {
         
         // default metadata comes from configuration
         m_metadata.put("contentType", configData.get("content-type"));
+        m_metadata.put("dataType", configData.get("data-type"));
         m_metadata.put("sourceName", configData.get("source-name"));
         m_metadata.put("sourceUrl", configData.get("source-URI"));
         
