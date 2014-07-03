@@ -36,11 +36,13 @@ public abstract class CollectorAbstractBase implements Collector {
         
         // default metadata comes from configuration
         m_metadata.put("contentType", configData.get("content-type"));
+        m_metadata.put("dataType", configData.get("data-type"));
         m_metadata.put("sourceName", configData.get("source-name"));
         m_metadata.put("sourceUrl", configData.get("source-URI"));
         
         Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
         Map<String, Object> stuccoMap = (Map<String, Object>) configMap.get("stucco");
+        
         Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoMap.get("document-service");
        
         try {

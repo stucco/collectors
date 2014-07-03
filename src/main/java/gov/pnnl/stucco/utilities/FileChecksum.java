@@ -1,11 +1,10 @@
 package gov.pnnl.stucco.utilities;
 
 import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -55,6 +54,27 @@ public class FileChecksum {
         }
     }
     
+    /**
+     * Computes the checksum of a byte array.
+     * 
+     * @param algorithm  The algorithm to use, such as MD5 or SHA-1.
+     * @param content    The byte array to checksum.
+     * 
+     * @return Lowercase hexadecimal checksum string
+     */
+    public static String compute(String algorithm, byte[] content) throws NoSuchAlgorithmException {
+        // Get the algorithm
+        MessageDigest digest = MessageDigest.getInstance(algorithm);
+    
+        // Compute checksum
+        digest.update(content);
+
+        // Get the result in hex format
+        byte[] checksumArray = digest.digest();            
+        String checksum = toHexString(checksumArray);
+        return checksum;
+    }
+    
     public static void main(String[] args) {
         // Parse command line
         
@@ -73,7 +93,7 @@ public class FileChecksum {
         
         try {
             // Get the checksum
-            String checksum = FileChecksum.compute(algorithm, file);
+            String checksum = compute(algorithm, file);
             System.out.println(checksum);
         } 
         catch (NoSuchAlgorithmException nsae) {
@@ -81,6 +101,33 @@ public class FileChecksum {
             System.exit(3);
         } 
         catch (IOException e) {
+            e.printStackTrace();
+        }
+        
+        try (
+            BufferedInputStream in = new BufferedInputStream(new FileInputStream(file)); 
+            ByteArrayOutputStream out = new ByteArrayOutputStream(1000000);
+        ) {
+            // Read the file in chunks
+            byte[] buffer = new byte[8192]; // 8K
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) > 0) {
+                out.write(buffer, 0, bytesRead);
+            }
+            
+            // Convert to byte array
+            byte[] content = out.toByteArray();
+            
+            // Compute checksum on byte array
+            String checksum = compute(algorithm, content);
+            System.out.println(checksum);
+        }
+        catch (IOException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (NoSuchAlgorithmException e) {
+            // TODO Auto-generated catch block
             e.printStackTrace();
         }
         

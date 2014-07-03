@@ -4,25 +4,22 @@ package gov.pnnl.stucco.collectors;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
-import java.io.BufferedReader;
+import gov.pnnl.stucco.utilities.CollectorMetadata;
+import gov.pnnl.stucco.utilities.FileChecksum;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.text.SimpleDateFormat;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-
-public class CollectorWebPageImpl extends CollectorAbstractBase{
-    private static final Logger logger = LoggerFactory.getLogger(CollectorWebPageImpl.class);
+public class CollectorWebPageImpl extends CollectorHttp {
     
-    /** URI from which we are obtaining content*/
-    private String m_URI;
-        
     /** 
      * constructor for obtaining the contents of a webpage
      * @param URI - where to get the contents on the web
@@ -30,93 +27,161 @@ public class CollectorWebPageImpl extends CollectorAbstractBase{
      */
     public CollectorWebPageImpl(Map<String, String> configData) {
         super(configData);
-        
-        m_URI = configData.get("source-URI");  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
-        m_metadata.put("sourceUrl", m_URI);
     }
     
     
     @Override
     public void collect() {  
         try {
-            m_rawContent = obtainWebPage(m_URI).getBytes();
-            send();
+            if (needToGet(m_URI)) {
+                if (obtainWebPage(m_URI)) {
+                    send();
+//                    debugSaveContent(m_URI);
+                }
+            }
             clean();
         }
-        catch (Exception e) 
+        catch (IOException e) 
         {
             logger.error("Exception raised while reading web page", e);
         }
-        
     }
     
-    /** retrieve the webpage */
     //  TODO: ISSUES TO DEAL WITH:  
     //       Authentication: Username, PW
     //       Cookies
     //       Encoding issues
-    private String obtainWebPage(String URI) throws Exception 
+    /**
+     * Retrieves the webpage.
+     *
+     * @return Whether we got new content
+     */
+    private boolean obtainWebPage(String uri) throws IOException
     {
-        URL url = null;
-        BufferedReader reader = null;
-        StringBuilder stringBuilder;
-
-        try
-        {
-          // create the HttpURLConnection
-          url = new URL(URI);
-          HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-          
-          // just want to do an HTTP GET here
-          connection.setRequestMethod("GET");
-          
-          // give it 15 seconds to respond
-          connection.setReadTimeout(15*1000);
-          connection.connect();
-          
-          m_metadata.put("contentType", connection.getHeaderField("Content-Type"));
-          String timestamp = connection.getHeaderField("Last-Modified");
-          
-          // using apache http components there is a easier way to do this conversion but for now we do it this way.
-          SimpleDateFormat format = new SimpleDateFormat("EE, dd MMM yyyy HH:mm:ss zzz");
-          
-          if (timestamp != null)  { 
-              m_timestamp = format.parse(timestamp);
-          }
-          
-          // read the output from the server
-          reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-          stringBuilder = new StringBuilder();
-
-          String line = null;
-          while ((line = reader.readLine()) != null)
-          {
-            stringBuilder.append(line + "\n");
-          }
-          return stringBuilder.toString();
-        }
-        finally
-        {
-          // close the reader; this can throw an exception too, so
-          // wrap it in another try/catch block.
-          if (reader != null)
-          {
-            try
-            {
-              reader.close();
+        HttpURLConnection connection = makeConditionalRequest("GET", uri);
+        int responseCode = getEnhancedResponseCode(connection);
+        boolean isNewContent = (responseCode == HttpURLConnection.HTTP_OK);
+        
+        if (isNewContent) {
+            // So far it seems new
+            
+            m_metadata.put("contentType", connection.getHeaderField("Content-Type"));
+            
+            // Get the Last-Modified timestamp
+            long now = System.currentTimeMillis();
+            long time = connection.getHeaderFieldDate("Last-Modified", now);
+            m_timestamp = new Date(time);
+        
+            // Get the ETag
+            String eTag = connection.getHeaderField("ETag");
+            if (eTag == null) {
+                eTag = "";
             }
-            catch (IOException ioe)
-            {
-              logger.warn("Close failed", ioe);  
+            
+           // Get the content as a byte array, and compute its checksum
+            byte[] content = null;
+            try (
+                    BufferedInputStream in = new BufferedInputStream(connection.getInputStream());
+                    ByteArrayOutputStream out = new ByteArrayOutputStream()
+            ) {
+                // Get a chunk at a time 
+                byte[] buffer = new byte[8192]; // 8K
+                int bytesRead;
+                while ((bytesRead = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, bytesRead);
+                }
+
+                content = out.toByteArray();
             }
-          }
+            String checksum = CollectorMetadata.computeHash(content);
+        
+            
+            // Update the metadata
+            isNewContent = updateMetadata(uri, m_timestamp, eTag, checksum);
+            String endUri = connection.getURL().toExternalForm();
+            if (!uri.equalsIgnoreCase(endUri)) {
+                // We got redirected, so save metadata for the end URL too
+                updateMetadata(endUri, m_timestamp, eTag, checksum);
+            }
+            metadata.save();
+            
+            if (isNewContent) {
+                // Save the new content
+                m_rawContent = content;
+            }
+            else {
+                // Content isn't new
+                logger.info("GET {} content has same SHA-1 as before", endUri);
+                m_rawContent = null;
+            }
+            m_rawContent = isNewContent?  content : null;            
         }
+        
+        return isNewContent;
     }
 
+    /** Updates the metadata for a URL after a successful GET. */
+    private boolean updateMetadata(String url, Date timestamp, String eTag, String checksum) {
+        // Timestamp
+        metadata.setTimestamp(url, timestamp);
+
+        // ETag
+        metadata.setETag(url, eTag);
+        
+        // Update the SHA-1 checksum and see if it changed
+        boolean isNewContent = metadata.setHash(url, checksum);
+        return isNewContent;
+    }
 
     @Override
     public void clean() {
         m_rawContent = null;
     }  
+       
+    /** Test driver used during development. */
+    static public void main(String[] args) {
+        try {                
+//            String url = "http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-modified.xml";        // OK: HEAD conditional
+//            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
+//            String url = "http://seclists.org/rss/fulldisclosure.rss";                              // OK: HEAD conditional
+//            String url = "http://www.reddit.com/r/netsec/new.rss";                                  // FAIL: HEAD conditional or GET SHA-1, but 'ups', 'score', comments change ~10 seconds
+//            String url = "http://blog.cmpxchg8b.com/feeds/posts/default";                           // OK: HEAD Last-Modified
+            String url = "https://technet.microsoft.com/en-us/security/rss/bulletin";               // FAIL: RSS item order changes every time
+//            String url = "http://metasploit.org/modules/";                                          // FAIL: 'csrf-token' changes every time
+//            String url = "http://community.rapid7.com/community/metasploit/blog";                   // FAIL: IDs change every time
+//            String url = "http://rss.packetstormsecurity.com/files/";                               // FAIL: 'utmn' changes every time
+//            String url = "http://www.f-secure.com/exclude/vdesc-xml/latest_50.rss";                 // OK: HEAD Last-Modified
+//            String url = "https://isc.sans.edu/rssfeed_full.xml";                                   // FAIL: HEAD Last-Modified, 'lastBuildDate' changes ~10 minutes
+//            String url = "https://twitter.com/briankrebs";                                          // FAIL: Authenticity tokens change
+//            String url = "http://www.mcafee.com/threat-intelligence/malware/latest.aspx";           // OK: GET SHA-1
+//            String url = "http://about-threats.trendmicro.com/us/threatencyclopedia#malware";       // FAIL: GET SHA-1, but '__VIEWSTATE' and '__EVENTVALIDATION' change
+//            String url = "https://cve.mitre.org/data/refs/refmap/source-BUGTRAQ.html";              // OK: GET SHA-1
+//            String url = "https://isc.sans.edu/feeds/daily_sources";                                // OK: HEAD Last-Modified
+            
+//            String url = "http://espn.go.com";  // FAIL: Timestamp and IDs changed
+
+            
+            Config.setConfigFile(new File("../config/stucco.yml"));
+            Map<String, String> configData = new HashMap<String, String>();
+            configData.put("source-URI", url);
+            CollectorWebPageImpl collector = new CollectorWebPageImpl(configData);
+//            try {
+//                collector.obtainWebPage("https://isc.sans.edu/diary.html?storyid=18311&rss");
+//            }
+//            catch (IOException e) {
+//                // TODO Auto-generated catch block
+//                e.printStackTrace();
+//            }
+            System.err.println("COLLECTION #1");
+            collector.collect();
+            
+            Thread.sleep(2000);
+            System.err.println("\nCOLLECTION #2");
+            collector.collect();
+        }
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
     
 }
