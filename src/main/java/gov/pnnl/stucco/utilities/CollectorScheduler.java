@@ -88,11 +88,11 @@ public class CollectorScheduler {
                 }
                 else if (cronExpr.isEmpty()) {
                     // No expression, treat as commented out
-                    log.info(String.format("URI \"%s\" is unscheduled", uri));
+                    log.info("URI \"{}\" skipped because of missing cron expression", uri);
                 }
                 else {
                     // Not a recognized schedule specification
-                    log.error(String.format("URI \"%s\" has invalid schedule \"%s\"", uri, cronExpr));
+                    log.error("URI \"{}\" has invalid cron expression \"{}\"", uri, cronExpr);
                 }
             }
 

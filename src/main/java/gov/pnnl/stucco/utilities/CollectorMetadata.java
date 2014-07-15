@@ -249,7 +249,7 @@ public class CollectorMetadata {
     }
     
     /** Saves the metadata to a tab-delimited file. */
-    private void save(File f) throws IOException {
+    private synchronized void save(File f) throws IOException {
         try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(f)))) {
             for (Map.Entry<String, UriMetadata> entry : collectionMap.entrySet()) {
                 String key = entry.getKey();
@@ -260,7 +260,7 @@ public class CollectorMetadata {
     }
 
     /** Loads the metadata from a tab-delimited file where each line is URI\tTimestamp\tETag\tHashCode. */
-    private void load(File f) throws IOException {
+    private synchronized void load(File f) throws IOException {
         try (BufferedReader in = new BufferedReader(new FileReader(f))) {
             String line;
             while ((line = in.readLine()) != null) {

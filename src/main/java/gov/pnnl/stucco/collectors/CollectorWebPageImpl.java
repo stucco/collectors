@@ -111,7 +111,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
             }
             else {
                 // Content isn't new
-                logger.info("GET {} content has same SHA-1 as before", endUri);
+                logger.info("{} - SHA-1 unchanged", endUri);
                 m_rawContent = null;
             }
             m_rawContent = isNewContent?  content : null;            

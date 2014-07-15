@@ -13,6 +13,9 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Base class for collectors making HTTP or HTTPS requests.
+ */
 public abstract class CollectorHttp extends CollectorAbstractBase {
 
     protected static final Logger logger = LoggerFactory.getLogger(CollectorHttp.class);
@@ -68,30 +71,31 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
      */
     protected HttpURLConnection makeConditionalRequest(String httpRequestMethod, String uri)
             throws IOException {
-                // Set up request
-                URL url = new URL(uri);
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                connection.setRequestMethod(httpRequestMethod);
-                connection.setReadTimeout(TIMEOUT);
-                
-                // Add metadata hints (which may get ignored):
-                
-                // Timestamp
-                long lastTime = metadata.getTimestamp(uri).getTime();
-                connection.setIfModifiedSince(lastTime);
-                
-                // ETag
-                String lastETag = metadata.getETag(uri);
-                if (!lastETag.equals(CollectorMetadata.NONE)) {
-                    connection.setRequestProperty("If-None-Match", lastETag);
-                }
-                
-                
-                // Make request
-                connection.connect();
-            
-                return connection;
-            }
+        // Set up request
+        URL url = new URL(uri);
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setRequestMethod(httpRequestMethod);
+        connection.setReadTimeout(TIMEOUT);
+
+        // Add metadata hints (which may get ignored):
+
+        // Timestamp
+        long lastTime = metadata.getTimestamp(uri).getTime();
+        connection.setIfModifiedSince(lastTime);
+
+        // ETag
+        String lastETag = metadata.getETag(uri);
+        if (!lastETag.equals(CollectorMetadata.NONE)) {
+            connection.setRequestProperty("If-None-Match", lastETag);
+        }
+
+
+        // Make request
+        logger.info("{} - {}", uri, httpRequestMethod);
+        connection.connect();
+
+        return connection;
+    }
 
     /** 
      * Gets a potentially edited HTTP response code for a connection. The code
@@ -104,17 +108,13 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         String requestMethod = connection.getRequestMethod();
         int responseCode = connection.getResponseCode();
         
+        // Get the possibly redirected URL
+        URL url = connection.getURL();
+        String uri = url.toExternalForm();
+        
         switch (responseCode) {
-            case HttpURLConnection.HTTP_NOT_MODIFIED:
-                logger.info("{} returned 304 Not Modified", requestMethod);
-                break;
-                
             case HttpURLConnection.HTTP_OK:
                 // Connected OK
-    
-                // Get the possibly redirected URL
-                URL url = connection.getURL();
-                String uri = url.toExternalForm();
     
                 // Check timestamp
                 long now = System.currentTimeMillis();
@@ -126,7 +126,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     
                     // Log it
                     Date lastModifiedDate = new Date(lastModified);
-                    logger.info("{} - Already retrieved since Last-Modified: {}", requestMethod, lastModifiedDate);
+                    logger.info("{} - Already retrieved since Last-Modified: {}", uri, lastModifiedDate);
                 }
                 else {
                     // Check hash
@@ -137,14 +137,26 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                         responseCode = HttpURLConnection.HTTP_NOT_MODIFIED;
     
                         // Log it
-                        logger.info("{} - Already retrieved with ETag: {}", requestMethod, eTag);
+                        logger.info("{} - Already retrieved with ETag: {}", uri, eTag);
+                    }
+                    else {
+                        logger.info("{} - 200 OK", uri);
                     }
                 }
                 break;
                 
+            case HttpURLConnection.HTTP_NOT_MODIFIED:
+                logger.info("{} - 304 Not Modified", uri);
+                break;
+                
+            case HttpURLConnection.HTTP_NOT_FOUND:
+                // Common case that we may want to know about
+                logger.warn("{} - 404 Not Found", uri);
+                break;
+
             default:
-                // Any other response may be something we need to know about for future reference
-                logger.error("{} returned {}", responseCode);
+                // Any other response may also be something we want to know about
+                logger.warn("{} - {}", uri, responseCode);
                 break;
         }
         
@@ -158,7 +170,53 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     protected boolean needToGet(String uri) throws IOException {
         HttpURLConnection connection = makeConditionalRequest("HEAD", uri);
         int responseCode = getEnhancedResponseCode(connection);
-        return (responseCode != HttpURLConnection.HTTP_NOT_MODIFIED);
+        
+        switch (responseCode) {
+            // Codes where there's no point in making a GET request
+            case HttpURLConnection.HTTP_NO_CONTENT:
+            case HttpURLConnection.HTTP_MULT_CHOICE:
+            case HttpURLConnection.HTTP_SEE_OTHER:
+            case HttpURLConnection.HTTP_USE_PROXY:
+            case HttpURLConnection.HTTP_NOT_MODIFIED:
+            case HttpURLConnection.HTTP_BAD_REQUEST:
+            case HttpURLConnection.HTTP_UNAUTHORIZED:
+            case HttpURLConnection.HTTP_PAYMENT_REQUIRED:
+            case HttpURLConnection.HTTP_FORBIDDEN:
+            case HttpURLConnection.HTTP_NOT_FOUND:
+            case HttpURLConnection.HTTP_BAD_METHOD:
+            case HttpURLConnection.HTTP_NOT_ACCEPTABLE:
+            case HttpURLConnection.HTTP_PROXY_AUTH:
+            case HttpURLConnection.HTTP_GONE:
+            case HttpURLConnection.HTTP_LENGTH_REQUIRED:
+            case HttpURLConnection.HTTP_ENTITY_TOO_LARGE:
+            case HttpURLConnection.HTTP_REQ_TOO_LONG:
+            case HttpURLConnection.HTTP_UNSUPPORTED_TYPE:
+            case HttpURLConnection.HTTP_UNAVAILABLE:
+            case HttpURLConnection.HTTP_VERSION:
+                return false;
+            
+            // Codes where the GET request might work
+            case HttpURLConnection.HTTP_OK:
+            case HttpURLConnection.HTTP_CREATED:
+            case HttpURLConnection.HTTP_ACCEPTED:
+            case HttpURLConnection.HTTP_NOT_AUTHORITATIVE:
+            case HttpURLConnection.HTTP_RESET:
+            case HttpURLConnection.HTTP_PARTIAL:
+            case HttpURLConnection.HTTP_MOVED_PERM:
+            case HttpURLConnection.HTTP_MOVED_TEMP:
+            case HttpURLConnection.HTTP_CLIENT_TIMEOUT:
+            case HttpURLConnection.HTTP_INTERNAL_ERROR:
+            case HttpURLConnection.HTTP_NOT_IMPLEMENTED:
+            case HttpURLConnection.HTTP_BAD_GATEWAY:
+            case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
+                return true;
+            
+            // Codes where we're not sure, so try the GET
+            case HttpURLConnection.HTTP_CONFLICT:
+            case HttpURLConnection.HTTP_PRECON_FAILED:
+            default:
+                return true;
+        }
     }
 
 }

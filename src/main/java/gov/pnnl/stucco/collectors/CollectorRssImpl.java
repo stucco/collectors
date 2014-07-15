@@ -35,6 +35,7 @@ public class CollectorRssImpl extends CollectorHttp {
     @Override
     public void collect() {
         try {
+            logger.info("{} - Collecting feed", m_URI);
             if (needToGet(m_URI)) {
                 obtainFeed(m_URI);
             }
@@ -42,7 +43,7 @@ public class CollectorRssImpl extends CollectorHttp {
         }
         catch (IOException e) 
         {
-            logger.error("Exception raised while reading web page", e);
+            logger.error("Exception raised while reading feed", e);
         }
     }
     
@@ -86,7 +87,7 @@ public class CollectorRssImpl extends CollectorHttp {
                 metadata.save();
             }
             else {
-                logger.info("GET {} RSS list has same SHA-1 as before", url);
+                logger.info("{} - feed SHA-1 unchanged", url);
             }
             
             clean();
@@ -107,7 +108,7 @@ public class CollectorRssImpl extends CollectorHttp {
      * @param checksumAll  
      * If true, checksum all URLs. If false, checksum only those URLs we know
      * we've successfully fetched at some point.
-     * */
+     */
     private String computeFeedChecksum(SyndFeed feed, boolean checksumAll) {
         // Prepare to gather a list of URLs, so we can sort them.
         // We want to do this because some feeds change the order of listing.
@@ -146,7 +147,6 @@ public class CollectorRssImpl extends CollectorHttp {
         List<SyndEntryImpl> entries = feed.getEntries();
         for (SyndEntryImpl entry : entries) {
             String link = entry.getLink();
-            logger.info("Collecting RSS feed entry: " + link);
             
             // Set the configuration info needed by the web collector
             webConfig.clear();
