@@ -5,14 +5,12 @@ package gov.pnnl.stucco.collectors;
  */
 
 import gov.pnnl.stucco.utilities.CollectorMetadata;
-import gov.pnnl.stucco.utilities.FileChecksum;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
