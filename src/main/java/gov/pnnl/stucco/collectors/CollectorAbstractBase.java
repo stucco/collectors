@@ -42,6 +42,7 @@ public abstract class CollectorAbstractBase implements Collector {
         
         Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
         Map<String, Object> stuccoMap = (Map<String, Object>) configMap.get("stucco");
+        
         Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoMap.get("document-service");
        
         try {

@@ -97,7 +97,7 @@ public class QueueSender {
 
             // Set up the channel with exchange and queue
             String exchangeName = (String) rabbitMq.get("exchange");
-	    String dataType = metadata.get("dataType");
+            String dataType = metadata.get("dataType");
             String dataSource = metadata.get("sourceName");
             String sensorName = metadata.get("sensorName");
             String routingKey = "stucco.in." + dataType + "." + dataSource;
