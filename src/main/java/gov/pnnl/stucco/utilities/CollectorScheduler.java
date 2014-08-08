@@ -144,6 +144,18 @@ public class CollectorScheduler {
             Map<String, Object> config = Config.getMap();
             Map<String, Object> sectionMap = (Map<String, Object>) config.get(section);
 
+            // Set up to handle externally-triggered shutdown gracefully
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                public void run() {
+                    CollectorMetadata metadata = CollectorMetadata.getInstance();
+                    
+                    // CollectorMetadata.read() and write() are synchronized methods.
+                    // If either is running, we'll block here until the method is finished.
+                    synchronized (metadata) {
+                    }
+                }
+            });
+            
             // Run the scheduler for a really long time
             CollectorScheduler scheduler = new CollectorScheduler();
             scheduler.runSchedule(sectionMap);
