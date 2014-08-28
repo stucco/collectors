@@ -20,6 +20,9 @@ public abstract class CollectorAbstractBase implements Collector {
     protected final Map<String, String> m_metadata = new HashMap<String, String>();
     protected final QueueSender m_queueSender           = new QueueSender();
     
+    /** The document storage service. */
+    protected DocServiceClient docServiceClient;
+
     /** raw content from source */
     protected byte[] m_rawContent;
     
@@ -30,6 +33,7 @@ public abstract class CollectorAbstractBase implements Collector {
     
     /** Map of configuration data for the specific collector. */
     private Map<String, String> configData;
+
 
     protected CollectorAbstractBase(Map<String, String> configData) {
         this.configData = configData;
@@ -46,7 +50,7 @@ public abstract class CollectorAbstractBase implements Collector {
         Map<String, Object> docServiceConfig = (Map<String, Object>) stuccoMap.get("document-service");
        
         try {
-            DocServiceClient docServiceClient = new DocServiceClient(docServiceConfig);
+            docServiceClient = new DocServiceClient(docServiceConfig);
         
             // we create a delegate for queueSender
             m_queueSender.setDocService(docServiceClient);

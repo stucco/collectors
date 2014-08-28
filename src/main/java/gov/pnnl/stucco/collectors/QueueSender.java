@@ -26,57 +26,83 @@ public class QueueSender {
 
     private DocServiceClient docServiceClient = null;
 
+    private int maxMessageSize;
+
     /** Sets up a sender */
     @SuppressWarnings("unchecked")
     public QueueSender() {
         Map<String, Object> defaultSection = (Map<String, Object>) Config.getMap();
         rabbitMq = (Map<String, Object>) defaultSection.get("rabbitmq");
+        determineMaxMessageSize();
     }
 
-    /** Sends a file to the specified queue. */
+    /** 
+     * Sends a content message. Depending on content size, this either sends
+     * the content directly, or it first stores the document and sends the ID.
+     *  
+     * @deprecated 
+     * Use {@link #sendMessage(Map, byte[])} instead. Retained for now for 
+     * backward compatibility.
+     */
     public void send(Map<String, String> metadata, byte[] rawContent) {
         // TODO: Refactor to reuse the connection/channel instead of creating
         // anew each time
 
+        try {
+            // Determine if the data should be sent straight to the queue or to the document service
+            if (rawContent.length > maxMessageSize) {
+                String docId = saveToDocumentStore(rawContent, metadata.get("contentType"));
+                if (!docId.isEmpty()) {
+                    sendIdMessage(metadata, docId.getBytes());
+                }
+            } else {
+                sendRawContentMessage(metadata, rawContent);
+            }
+        } catch (DocServiceException e) {
+            logger.error("Cannot send data", e);
+        }
+    }
+
+    /** Determines and saves the threshold for message size. */
+    private void determineMaxMessageSize() {
         String maxMessageSizeStr = (String) rabbitMq.get("message_size_limit");
-        int maxMessageSize = 10000000;
+        maxMessageSize = 10000000;
         try {
             maxMessageSize = Integer.parseInt(maxMessageSizeStr);
         } catch (NumberFormatException e) {
             // Just use the default
             logger.warn("Message size limit invalid; using default");
         }
-
-        // Determine if the data should be sent straight to the queue or to the document service
-        if (rawContent.length > maxMessageSize) {
-            if (docServiceClient == null) {
-                logger.error("Cannot send data: document-service client has not been set");
-                return;
-            }
-            try {
-                String docId = docServiceClient.store(rawContent, metadata.get("contentType"));
-                metadata.put("content", "false");
-                prepareQueueAndSend(metadata, docId.getBytes());
-            } catch (DocServiceException e) {
-                logger.error("Cannot send data", e);
-            }
-        } else {
-            metadata.put("content", "true");
-            prepareQueueAndSend(metadata, rawContent);
-        }
-    }
-
-    static public void main(String[] args) {
-        QueueSender sender = new QueueSender();
-        // sender.send("test.txt\nA test message from the queue sender\n");
-        // //TODO
     }
 
     public void setDocService(DocServiceClient docServiceClient) {
         this.docServiceClient = docServiceClient;
     }
 
-    /** Sets up message queue and sends the data */
+    /** Sends an ID-based message to the message queue. */
+    public void sendIdMessage(Map<String, String> metadata, byte[] messageBytes) {
+        metadata.put("content", "false");
+        prepareQueueAndSend(metadata, messageBytes);
+    }
+    
+    /** Saves content to the document store, getting back the ID. */
+    private String saveToDocumentStore(byte[] rawContent, String contentType) throws DocServiceException {
+        if (docServiceClient == null) {
+            logger.error("Cannot send data: document-service client has not been set");
+            return "";
+        }
+        String docId = docServiceClient.store(rawContent, contentType);
+        
+        return docId;
+    }
+    
+    /** Sends a raw-content message to the message queue. */
+    public void sendRawContentMessage(Map<String, String> metadata, byte[] messageBytes) {
+        metadata.put("content", "true");
+        prepareQueueAndSend(metadata, messageBytes);        
+    }
+    
+    /** Sets up message queue and sends a message. */
     private void prepareQueueAndSend(Map<String, String> metadata, byte[] messageBytes) {
         try {
             // Build AMPQ Basic Properties

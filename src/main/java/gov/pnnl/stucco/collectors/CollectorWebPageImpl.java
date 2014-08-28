@@ -4,6 +4,8 @@ package gov.pnnl.stucco.collectors;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
+import gov.pnnl.stucco.doc_service_client.DocServiceException;
+import gov.pnnl.stucco.doc_service_client.DocumentObject;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
 
 import java.io.BufferedInputStream;
@@ -14,9 +16,23 @@ import java.net.HttpURLConnection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 
 public class CollectorWebPageImpl extends CollectorHttp {
+    
+    /** UUID assigned to the collected content. */
+    private String docId = "";
+    
+    /** Whether we will save the collected content to the document store. */
+    private boolean storing = true;
+    
+    /** Whether we will send a message for the collected content. */
+    private boolean messaging = true;
+
+    /** Content of the message that got sent. */
+    private byte[] messageContent = new byte[0];
+    
     
     /** 
      * constructor for obtaining the contents of a webpage
@@ -27,6 +43,21 @@ public class CollectorWebPageImpl extends CollectorHttp {
         super(configData);
     }
     
+    public void setStoring(boolean flag) {
+        storing = flag;
+    }
+    
+    public void setMessaging(boolean flag) {
+        messaging = flag;
+    }
+    
+    public String getDocId() {
+        return docId;
+    }
+    
+    public byte[] getMessageContent() {
+        return messageContent;
+    }
     
     @Override
     public void collect() {  
@@ -34,7 +65,6 @@ public class CollectorWebPageImpl extends CollectorHttp {
             if (needToGet(m_URI)) {
                 if (obtainWebPage(m_URI)) {
                     send();
-//                    debugSaveContent(m_URI);
                 }
             }
             clean();
@@ -134,7 +164,31 @@ public class CollectorWebPageImpl extends CollectorHttp {
     @Override
     public void clean() {
         m_rawContent = null;
-    }  
+    }
+    
+    // Overridden to separate ID generation, document storage, and messaging
+    @Override
+    public void send() {
+        try {
+            // Assign a document ID
+            docId = UUID.randomUUID().toString();
+            
+            if (storing) {
+                // Send to document store
+                String contentType = m_metadata.get("contentType");
+                DocumentObject doc = new DocumentObject(m_rawContent, contentType);
+                docServiceClient.store(doc, docId);
+            }
+            
+            if (messaging) {
+                messageContent = docId.getBytes();
+                m_queueSender.sendIdMessage(m_metadata, messageContent);
+            }
+        } 
+        catch (DocServiceException e) {
+            logger.error("Cannot send data", e);
+        }
+    }
        
     /** Test driver used during development. */
     static public void main(String[] args) {

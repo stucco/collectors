@@ -36,6 +36,10 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         m_URI = configData.get("source-URI");  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
         m_metadata.put("sourceUrl", m_URI);
     }
+    
+    public String getURL() {
+        return m_URI;
+    }
 
     /** Writes the current content to a temp file that can be inspected post-run. */
     protected void debugSaveContent(String uri) {
