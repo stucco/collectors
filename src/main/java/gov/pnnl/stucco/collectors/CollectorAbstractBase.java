@@ -32,7 +32,7 @@ public abstract class CollectorAbstractBase implements Collector {
     private int numberOfThreads = 1;
     
     /** Map of configuration data for the specific collector. */
-    private Map<String, String> configData;
+    protected Map<String, String> configData;
 
 
     protected CollectorAbstractBase(Map<String, String> configData) {
@@ -78,5 +78,6 @@ public abstract class CollectorAbstractBase implements Collector {
     public abstract void collect();
     
     @Override
-    public abstract void clean();
+    public void clean() {   
+    }
 }

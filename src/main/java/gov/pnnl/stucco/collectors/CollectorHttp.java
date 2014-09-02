@@ -1,5 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
+import gov.pnnl.stucco.doc_service_client.DocServiceException;
+import gov.pnnl.stucco.doc_service_client.DocumentObject;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
 
 import java.io.IOException;
@@ -9,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
 import java.util.Map;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +20,9 @@ import org.slf4j.LoggerFactory;
  * Base class for collectors making HTTP or HTTPS requests.
  */
 public abstract class CollectorHttp extends CollectorAbstractBase {
+
+    /** Configuration data key for a collector's URI. */
+    protected static final String SOURCE_URI = "source-URI";
 
     protected static final Logger logger = LoggerFactory.getLogger(CollectorHttp.class);
     
@@ -29,18 +35,46 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     /** URI from which we are obtaining content*/
     protected String m_URI;
 
+    /** UUID assigned to the collected content. */
+    protected String docId = "";
+    
+    /** Whether we will save the collected content to the document store. */
+    protected boolean storing = true;
+    
+    /** Whether we will send a message for the collected content. */
+    protected boolean messaging = true;
+
+    /** Content of the message that got sent (empty if there wasn't one). */
+    protected byte[] messageContent = new byte[0];
+
     
     public CollectorHttp(Map<String, String> configData) {
         super(configData);
         
-        m_URI = configData.get("source-URI");  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
+        m_URI = configData.get(SOURCE_URI);  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
         m_metadata.put("sourceUrl", m_URI);
     }
     
-    public String getURL() {
+    final public void setStoring(boolean flag) {
+        storing = flag;
+    }
+    
+    final public void setMessaging(boolean flag) {
+        messaging = flag;
+    }
+    
+    final public String getDocId() {
+        return docId;
+    }
+    
+    final public String getURL() {
         return m_URI;
     }
-
+    
+    final public byte[] getMessageContent() {
+        return messageContent;
+    }
+    
     /** Writes the current content to a temp file that can be inspected post-run. */
     protected void debugSaveContent(String uri) {
         try {
@@ -223,4 +257,23 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         }
     }
 
+    /** Generates a UUID for the document being collected. */
+    protected void assignDocId() {
+        // Assign a document ID
+        docId = UUID.randomUUID().toString();
+    }
+
+    /**
+     * Stores the collected document to the document store.
+     * 
+     * @throws DocServiceException
+     */
+    protected void storeDocument() throws DocServiceException {
+        if (storing) {
+            // Send to document store
+            String contentType = m_metadata.get("contentType");
+            DocumentObject doc = new DocumentObject(m_rawContent, contentType);
+            docServiceClient.store(doc, docId);
+        }
+    }
 }

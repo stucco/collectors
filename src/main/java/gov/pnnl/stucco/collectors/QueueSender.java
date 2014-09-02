@@ -41,7 +41,7 @@ public class QueueSender {
      * the content directly, or it first stores the document and sends the ID.
      *  
      * @deprecated 
-     * Use {@link #sendMessage(Map, byte[])} instead. Retained for now for 
+     * Use {@link #sendIdMessage(Map, byte[])} instead. Retained for now for 
      * backward compatibility.
      */
     public void send(Map<String, String> metadata, byte[] rawContent) {
@@ -97,7 +97,7 @@ public class QueueSender {
     }
     
     /** Sends a raw-content message to the message queue. */
-    public void sendRawContentMessage(Map<String, String> metadata, byte[] messageBytes) {
+    private void sendRawContentMessage(Map<String, String> metadata, byte[] messageBytes) {
         metadata.put("content", "true");
         prepareQueueAndSend(metadata, messageBytes);        
     }

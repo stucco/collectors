@@ -126,6 +126,11 @@ public class CollectorMetadata {
         }
     } 
     
+    /** Gets whether there's metadata for a given URI. */
+    public boolean contains(String uri) {
+        return collectionMap.containsKey(uri);
+    }
+    
     /** Gets metadata for a URI, creating a new object if necessary. */
     private UriMetadata getOrCreateMetadata(String uri) {
         // Normalize
@@ -300,5 +305,4 @@ public class CollectorMetadata {
             }
         }
     }
-    
 }

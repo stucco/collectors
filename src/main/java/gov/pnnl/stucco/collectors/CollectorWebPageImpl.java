@@ -19,20 +19,7 @@ import java.util.Map;
 import java.util.UUID;
 
 
-public class CollectorWebPageImpl extends CollectorHttp {
-    
-    /** UUID assigned to the collected content. */
-    private String docId = "";
-    
-    /** Whether we will save the collected content to the document store. */
-    private boolean storing = true;
-    
-    /** Whether we will send a message for the collected content. */
-    private boolean messaging = true;
-
-    /** Content of the message that got sent. */
-    private byte[] messageContent = new byte[0];
-    
+public class CollectorWebPageImpl extends CollectorHttp {    
     
     /** 
      * constructor for obtaining the contents of a webpage
@@ -43,35 +30,23 @@ public class CollectorWebPageImpl extends CollectorHttp {
         super(configData);
     }
     
-    public void setStoring(boolean flag) {
-        storing = flag;
-    }
-    
-    public void setMessaging(boolean flag) {
-        messaging = flag;
-    }
-    
-    public String getDocId() {
-        return docId;
-    }
-    
-    public byte[] getMessageContent() {
-        return messageContent;
-    }
-    
     @Override
     public void collect() {  
         try {
             if (needToGet(m_URI)) {
                 if (obtainWebPage(m_URI)) {
+                    assignDocId();
+                    storeDocument();                    
                     send();
                 }
             }
             clean();
         }
-        catch (IOException e) 
-        {
+        catch (IOException e) {
             logger.error("Exception raised while reading web page", e);
+        } 
+        catch (DocServiceException e) {
+            logger.error("Cannot send data", e);
         }
     }
     
@@ -84,7 +59,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
      *
      * @return Whether we got new content
      */
-    private boolean obtainWebPage(String uri) throws IOException
+    protected boolean obtainWebPage(String uri) throws IOException
     {
         HttpURLConnection connection = makeConditionalRequest("GET", uri);
         int responseCode = getEnhancedResponseCode(connection);
@@ -169,27 +144,12 @@ public class CollectorWebPageImpl extends CollectorHttp {
     // Overridden to separate ID generation, document storage, and messaging
     @Override
     public void send() {
-        try {
-            // Assign a document ID
-            docId = UUID.randomUUID().toString();
-            
-            if (storing) {
-                // Send to document store
-                String contentType = m_metadata.get("contentType");
-                DocumentObject doc = new DocumentObject(m_rawContent, contentType);
-                docServiceClient.store(doc, docId);
-            }
-            
-            if (messaging) {
-                messageContent = docId.getBytes();
-                m_queueSender.sendIdMessage(m_metadata, messageContent);
-            }
-        } 
-        catch (DocServiceException e) {
-            logger.error("Cannot send data", e);
+        if (messaging) {
+            messageContent = docId.getBytes();
+            m_queueSender.sendIdMessage(m_metadata, messageContent);
         }
     }
-       
+    
     /** Test driver used during development. */
     static public void main(String[] args) {
         try {                
