@@ -28,8 +28,11 @@ public class CollectorFactory {
             CollectorDirectoryImpl dirCollector = new CollectorDirectoryImpl(configData);
             aCollector = dirCollector;
         } else if (collectorType.equalsIgnoreCase("RSS")) {
-        	CollectorRssImpl rssCollector = new CollectorRssImpl(configData);
-        	aCollector = rssCollector;
+            CollectorRssImpl rssCollector = new CollectorRssImpl(configData);
+            aCollector = rssCollector;
+        } else if (collectorType.equalsIgnoreCase("BUGTRAQ")) {
+            CollectorBugtraqVulnerabilities rssCollector = new CollectorBugtraqVulnerabilities(configData);
+            aCollector = rssCollector;
         }
         
         return aCollector;
