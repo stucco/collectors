@@ -46,15 +46,15 @@ public class CollectorFileImpl extends CollectorAbstractBase {
      * the file).
      */
     public byte[] getRawContent() {
-        return m_rawContent;
+        return rawContent;
     }
 
     /** Collects the content and retains it for later. */
     public void collectOnly() {
         try {
             // Read the file
-            m_rawContent = readFile(m_filename);
-            m_timestamp = new Date();
+            rawContent = readFile(m_filename);
+            timestamp = new Date();
         } catch (IOException e) {
             logger.error("Unable to collect '" + m_filename.toString() + "' because of IOException", e);
         }
@@ -73,7 +73,7 @@ public class CollectorFileImpl extends CollectorAbstractBase {
 
     @Override
     public void clean() {
-        m_rawContent = null;
+        rawContent = null;
     }
 
 }

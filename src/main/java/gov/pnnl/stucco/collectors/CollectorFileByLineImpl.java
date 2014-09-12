@@ -56,8 +56,8 @@ public class CollectorFileByLineImpl extends CollectorAbstractBase implements Ru
             fileInputStream = new FileInputStream(m_filename);
             aBufferedReader = new BufferedReader(new InputStreamReader(fileInputStream, Charset.forName("UTF-8")));
             while ((aLine = aBufferedReader.readLine()) != null) {
-                m_rawContent = aLine.getBytes();
-                m_timestamp = new Date();
+                rawContent = aLine.getBytes();
+                timestamp = new Date();
                 send();
             }
             clean();
@@ -75,12 +75,12 @@ public class CollectorFileByLineImpl extends CollectorAbstractBase implements Ru
      * the file).
      */
     public byte[] getRawContent() {
-        return m_rawContent;
+        return rawContent;
     }
 
     @Override
     public void clean() {
-        m_rawContent = null;
+        rawContent = null;
     }
 
     @Override

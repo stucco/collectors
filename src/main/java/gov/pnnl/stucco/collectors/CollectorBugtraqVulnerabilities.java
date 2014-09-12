@@ -63,8 +63,8 @@ public class CollectorBugtraqVulnerabilities extends CollectorHttp {
             String url = String.format(urlFormat, startIndex, entriesPerListing);
             
             // Create listing page collector
-            configData.put(SOURCE_URI, url);
-            CollectorBugtraqListing listingCollector = new CollectorBugtraqListing(configData);
+            collectorConfigData.put(SOURCE_URI, url);
+            CollectorBugtraqListing listingCollector = new CollectorBugtraqListing(collectorConfigData);
 
             // Collect the listing and the content from its entries
             listingCollector.collect();

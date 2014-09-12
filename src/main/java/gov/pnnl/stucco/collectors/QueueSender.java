@@ -18,6 +18,9 @@ import com.rabbitmq.client.ConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Class for sending RabbitMQ messages.
+ */
 public class QueueSender {
     private static final Logger logger = LoggerFactory.getLogger(QueueSender.class);
 

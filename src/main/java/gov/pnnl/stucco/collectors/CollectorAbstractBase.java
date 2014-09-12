@@ -16,33 +16,36 @@ import org.slf4j.LoggerFactory;
 /** Abstract base class used in implementing Collectors. */
 public abstract class CollectorAbstractBase implements Collector {
     private static final Logger logger = LoggerFactory.getLogger(CollectorAbstractBase.class);
-                    
-    protected final Map<String, String> m_metadata = new HashMap<String, String>();
-    protected final QueueSender m_queueSender           = new QueueSender();
+    
+    /** Metadata for inclusion in the RabbitMQ header. */
+    protected final Map<String, String> messageMetadata = new HashMap<String, String>();
+    
+    /** Delegate used to send RabbitMQ messages. */
+    protected final QueueSender messageSender = new QueueSender();
     
     /** The document storage service. */
     protected DocServiceClient docServiceClient;
 
     /** raw content from source */
-    protected byte[] m_rawContent;
+    protected byte[] rawContent;
     
     /** time the data was collected */
-    protected Date m_timestamp = null;
+    protected Date timestamp = null;
     
     private int numberOfThreads = 1;
     
     /** Map of configuration data for the specific collector. */
-    protected Map<String, String> configData;
+    protected Map<String, String> collectorConfigData;
 
 
     protected CollectorAbstractBase(Map<String, String> configData) {
-        this.configData = configData;
+        this.collectorConfigData = configData;
         
         // default metadata comes from configuration
-        m_metadata.put("contentType", configData.get("content-type"));
-        m_metadata.put("dataType", configData.get("data-type"));
-        m_metadata.put("sourceName", configData.get("source-name"));
-        m_metadata.put("sourceUrl", configData.get("source-URI"));
+        messageMetadata.put("contentType", configData.get("content-type"));
+        messageMetadata.put("dataType", configData.get("data-type"));
+        messageMetadata.put("sourceName", configData.get("source-name"));
+        messageMetadata.put("sourceUrl", configData.get("source-URI"));
         
         Map<String, Object> configMap = (Map<String, Object>) Config.getMap();
         Map<String, Object> stuccoMap = (Map<String, Object>) configMap.get("stucco");
@@ -53,7 +56,7 @@ public abstract class CollectorAbstractBase implements Collector {
             docServiceClient = new DocServiceClient(docServiceConfig);
         
             // we create a delegate for queueSender
-            m_queueSender.setDocService(docServiceClient);
+            messageSender.setDocService(docServiceClient);
         } catch (DocServiceException e) {
             logger.error("Could instantiate document-service client", e);
         }
@@ -63,7 +66,7 @@ public abstract class CollectorAbstractBase implements Collector {
      * Send the content when requested
      */
     public void send() {
-        m_queueSender.send(m_metadata, m_rawContent);
+        messageSender.send(messageMetadata, rawContent);
     }
     
     public void setNumberOfThreads(int threadCount) {

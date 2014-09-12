@@ -33,8 +33,8 @@ public class CollectorWebPageImpl extends CollectorHttp {
     @Override
     public void collect() {  
         try {
-            if (needToGet(m_URI)) {
-                if (obtainWebPage(m_URI)) {
+            if (needToGet(sourceUri)) {
+                if (obtainWebPage(sourceUri)) {
                     assignDocId();
                     storeDocument();                    
                     send();
@@ -68,12 +68,12 @@ public class CollectorWebPageImpl extends CollectorHttp {
         if (isNewContent) {
             // So far it seems new
             
-            m_metadata.put("contentType", connection.getHeaderField("Content-Type"));
+            messageMetadata.put("contentType", connection.getHeaderField("Content-Type"));
             
             // Get the Last-Modified timestamp
             long now = System.currentTimeMillis();
             long time = connection.getHeaderFieldDate("Last-Modified", now);
-            m_timestamp = new Date(time);
+            timestamp = new Date(time);
         
             // Get the ETag
             String eTag = connection.getHeaderField("ETag");
@@ -100,45 +100,45 @@ public class CollectorWebPageImpl extends CollectorHttp {
         
             
             // Update the metadata
-            isNewContent = updateMetadata(uri, m_timestamp, eTag, checksum);
+            isNewContent = updatePageMetadata(uri, timestamp, eTag, checksum);
             String endUri = connection.getURL().toExternalForm();
             if (!uri.equalsIgnoreCase(endUri)) {
                 // We got redirected, so save metadata for the end URL too
-                updateMetadata(endUri, m_timestamp, eTag, checksum);
+                updatePageMetadata(endUri, timestamp, eTag, checksum);
             }
-            metadata.save();
+            pageMetadata.save();
             
             if (isNewContent) {
                 // Save the new content
-                m_rawContent = content;
+                rawContent = content;
             }
             else {
                 // Content isn't new
                 logger.info("{} - SHA-1 unchanged", endUri);
-                m_rawContent = null;
+                rawContent = null;
             }
-            m_rawContent = isNewContent?  content : null;            
+            rawContent = isNewContent?  content : null;            
         }
         
         return isNewContent;
     }
 
     /** Updates the metadata for a URL after a successful GET. */
-    private boolean updateMetadata(String url, Date timestamp, String eTag, String checksum) {
+    private boolean updatePageMetadata(String url, Date timestamp, String eTag, String checksum) {
         // Timestamp
-        metadata.setTimestamp(url, timestamp);
+        pageMetadata.setTimestamp(url, timestamp);
 
         // ETag
-        metadata.setETag(url, eTag);
+        pageMetadata.setETag(url, eTag);
         
         // Update the SHA-1 checksum and see if it changed
-        boolean isNewContent = metadata.setHash(url, checksum);
+        boolean isNewContent = pageMetadata.setHash(url, checksum);
         return isNewContent;
     }
 
     @Override
     public void clean() {
-        m_rawContent = null;
+        rawContent = null;
     }
     
     // Overridden to separate ID generation, document storage, and messaging
@@ -146,7 +146,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
     public void send() {
         if (messaging) {
             messageContent = docId.getBytes();
-            m_queueSender.sendIdMessage(m_metadata, messageContent);
+            messageSender.sendIdMessage(messageMetadata, messageContent);
         }
     }
     

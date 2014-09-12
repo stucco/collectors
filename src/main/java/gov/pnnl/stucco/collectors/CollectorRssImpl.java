@@ -32,9 +32,9 @@ public class CollectorRssImpl extends CollectorHttp {
     @Override
     public void collect() {
         try {
-            logger.info("{} - Collecting feed", m_URI);
-            if (needToGet(m_URI)) {
-                obtainFeed(m_URI);
+            logger.info("{} - Collecting feed", sourceUri);
+            if (needToGet(sourceUri)) {
+                obtainFeed(sourceUri);
             }
             clean();
         }
@@ -57,11 +57,11 @@ public class CollectorRssImpl extends CollectorHttp {
             SyndFeed feed = input.build(read);
 
             // Set up for applying individual configuration for each URL
-            String sourceName = m_metadata.get("sourceName");
+            String sourceName = messageMetadata.get("sourceName");
             
             // Checksum the list of feed URLs
             String checksum = computeFeedChecksum(feed, true);
-            String oldChecksum = metadata.getHash(url);
+            String oldChecksum = pageMetadata.getHash(url);
             boolean isNewContent = !oldChecksum.equalsIgnoreCase(checksum);
             
             if (isNewContent) {
@@ -79,9 +79,9 @@ public class CollectorRssImpl extends CollectorHttp {
                 checksum = computeFeedChecksum(feed, false);
 
                 // Update the metadata
-                metadata.setTimestamp(url, timestamp);
-                metadata.setHash(url, checksum);
-                metadata.save();
+                pageMetadata.setTimestamp(url, timestamp);
+                pageMetadata.setHash(url, checksum);
+                pageMetadata.save();
             }
             else {
                 logger.info("{} - feed SHA-1 unchanged", url);
@@ -115,7 +115,7 @@ public class CollectorRssImpl extends CollectorHttp {
         // Copy each URL
         for (SyndEntryImpl entry : entries) {
             String url = entry.getLink().toLowerCase();            
-            if (checksumAll || metadata.getHash(url) != CollectorMetadata.NONE) {
+            if (checksumAll || pageMetadata.getHash(url) != CollectorMetadata.NONE) {
                 urlList.add(url);
             };
         }
@@ -151,7 +151,7 @@ public class CollectorRssImpl extends CollectorHttp {
             webConfig.put("source-name", sourceName);
             webConfig.put("source-URI", link);
             webConfig.put("content-type", "text/html");
-            webConfig.put("data-type", m_metadata.get("dataType"));
+            webConfig.put("data-type", messageMetadata.get("dataType"));
             
             // Use the web collector
             Collector collector = CollectorFactory.makeCollector(webConfig);
@@ -175,8 +175,9 @@ public class CollectorRssImpl extends CollectorHttp {
 //            String url = "http://exploit-db.com/rss.xml";                              // 403 Forbidden
 //            String url = "https://blog.damballa.com/feed";                             // 403 Forbidden
 //            String url = "https://evilzone.org/.xml/?type=rss";                        // SSLHandshakeException
-            String url = "http://rss.packetstormsecurity.com/files/";                  // OK: HEAD Last-Modified
-                
+//            String url = "http://rss.packetstormsecurity.com/files/";                  // OK: HEAD Last-Modified
+            String url = "http://www.sophos.com/en-us/rss/threats/latest-viruses.xml";
+            
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);

@@ -37,8 +37,8 @@ public class CollectorBugtraqListing extends CollectorWebPageImpl {
     @Override
     public void collect() {
         try {
-            if (needToGet(m_URI)) {
-                if (obtainWebPage(m_URI)) {
+            if (needToGet(sourceUri)) {
+                if (obtainWebPage(sourceUri)) {
                     
                     // Scrape the entry URLs from the listing
                     List<String> urlList = scrapeEntryUrls();
@@ -52,15 +52,15 @@ public class CollectorBugtraqListing extends CollectorWebPageImpl {
                     // For each entry 
                     for (String url : urlList) {
                         // If URL already in database
-                        if (metadata.contains(url)) {
+                        if (pageMetadata.contains(url)) {
                             // It's old, so we're done
                             allCollected = true;
                             return;
                         }
                         
                         // It's new, so collect it
-                        configData.put(SOURCE_URI, url);
-                        CollectorBugtraqEntry entryCollector = new CollectorBugtraqEntry(configData);
+                        collectorConfigData.put(SOURCE_URI, url);
+                        CollectorBugtraqEntry entryCollector = new CollectorBugtraqEntry(collectorConfigData);
                         entryCollector.collect();
                     } 
                 }
@@ -75,7 +75,7 @@ public class CollectorBugtraqListing extends CollectorWebPageImpl {
     /** Parses the entry URLs from the page content. */
     private List<String> scrapeEntryUrls() {
         // Convert bytes to String
-        String page = new String(m_rawContent);
+        String page = new String(rawContent);
         
         // Prepare a Java regex to find the URLs
         String regex = "<a href=\"(/bid/\\d+)\">http";

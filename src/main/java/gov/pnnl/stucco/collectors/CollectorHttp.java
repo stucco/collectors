@@ -29,11 +29,11 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     /** Number of milliseconds to allow for making a connection. */
     private static final int TIMEOUT = 15 * 1000;
     
-    /** Collection metadata as singleton. */
-    protected static CollectorMetadata metadata = CollectorMetadata.getInstance();
+    /** Metadata about the pages we've collected. */
+    protected static CollectorMetadata pageMetadata = CollectorMetadata.getInstance();
 
     /** URI from which we are obtaining content*/
-    protected String m_URI;
+    protected String sourceUri;
 
     /** UUID assigned to the collected content. */
     protected String docId = "";
@@ -51,8 +51,8 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     public CollectorHttp(Map<String, String> configData) {
         super(configData);
         
-        m_URI = configData.get(SOURCE_URI);  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
-        m_metadata.put("sourceUrl", m_URI);
+        sourceUri = configData.get(SOURCE_URI);  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
+        messageMetadata.put("sourceUrl", sourceUri);
     }
     
     final public void setStoring(boolean flag) {
@@ -68,7 +68,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     }
     
     final public String getURL() {
-        return m_URI;
+        return sourceUri;
     }
     
     final public byte[] getMessageContent() {
@@ -78,11 +78,11 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     /** Writes the current content to a temp file that can be inspected post-run. */
     protected void debugSaveContent(String uri) {
         try {
-            if (m_rawContent != null) {
+            if (rawContent != null) {
                 String prefix = debugGenerateFilePrefix(uri);
                 Path tempFile = Files.createTempFile(prefix, null);
                 logger.info("Writing {}", tempFile);
-                Files.write(tempFile, m_rawContent);
+                Files.write(tempFile, rawContent);
             }
         }
         catch (IOException e) {
@@ -118,11 +118,11 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         // Add metadata hints (which may get ignored):
 
         // Timestamp
-        long lastTime = metadata.getTimestamp(uri).getTime();
+        long lastTime = pageMetadata.getTimestamp(uri).getTime();
         connection.setIfModifiedSince(lastTime);
 
         // ETag
-        String lastETag = metadata.getETag(uri);
+        String lastETag = pageMetadata.getETag(uri);
         if (!lastETag.equals(CollectorMetadata.NONE)) {
             connection.setRequestProperty("If-None-Match", lastETag);
         }
@@ -157,7 +157,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                 // Check timestamp
                 long now = System.currentTimeMillis();
                 long lastModified = connection.getHeaderFieldDate("Last-Modified", now);
-                long lastTime = metadata.getTimestamp(uri).getTime();
+                long lastTime = pageMetadata.getTimestamp(uri).getTime();
                 if (lastModified <= lastTime) {
                     // Page is unmodified
                     responseCode = HttpURLConnection.HTTP_NOT_MODIFIED;
@@ -168,7 +168,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                 }
                 else {
                     // Check hash
-                    String lastETag = metadata.getETag(uri);
+                    String lastETag = pageMetadata.getETag(uri);
                     String eTag = connection.getHeaderField("ETag");
                     if (eTag != null  &&  !lastETag.equals(CollectorMetadata.NONE)  &&  eTag.equals(lastETag)) {
                         // Page is unmodified
@@ -271,8 +271,8 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     protected void storeDocument() throws DocServiceException {
         if (storing) {
             // Send to document store
-            String contentType = m_metadata.get("contentType");
-            DocumentObject doc = new DocumentObject(m_rawContent, contentType);
+            String contentType = messageMetadata.get("contentType");
+            DocumentObject doc = new DocumentObject(rawContent, contentType);
             docServiceClient.store(doc, docId);
         }
     }

@@ -31,7 +31,7 @@ public class CollectorBugtraqEntry extends CollectorWebPageImpl {
         StringBuilder messageBuffer = new StringBuilder();
         
         // Prepare to generate tab URLs
-        String baseUri = m_URI;
+        String baseUri = sourceUri;
         if (!baseUri.endsWith("/")) {
             baseUri += "/";
         }
@@ -42,8 +42,8 @@ public class CollectorBugtraqEntry extends CollectorWebPageImpl {
 
             // Create URL and collector
             String url = baseUri + tab;
-            configData.put(SOURCE_URI, url);
-            CollectorWebPageImpl tabCollector = new CollectorWebPageImpl(configData);
+            collectorConfigData.put(SOURCE_URI, url);
+            CollectorWebPageImpl tabCollector = new CollectorWebPageImpl(collectorConfigData);
             
             // The Stucco message will be handled by this entry collector instead of the tab collector
             tabCollector.setMessaging(false);
@@ -60,8 +60,8 @@ public class CollectorBugtraqEntry extends CollectorWebPageImpl {
         }
         
         // Send the Stucco message
-        m_rawContent = messageBuffer.toString().getBytes();
-        m_queueSender.sendIdMessage(m_metadata, m_rawContent);
+        rawContent = messageBuffer.toString().getBytes();
+        messageSender.sendIdMessage(messageMetadata, rawContent);
     }
 
 }
