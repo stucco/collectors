@@ -4,27 +4,17 @@ package gov.pnnl.stucco.utilities;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 import gov.pnnl.stucco.collectors.Config;
-import gov.pnnl.stucco.collectors.QueueSender;
-import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 import gov.pnnl.stucco.doc_service_client.DocServiceClient;
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
-import gov.pnnl.stucco.doc_service_client.DocumentObject;
 
 import java.io.BufferedOutputStream;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.xml.bind.DatatypeConverter;
-
-import org.apache.commons.io.FilenameUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +24,15 @@ import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.client.QueueingConsumer;
 
+
+/**
+ * Example class to demonstrate receiving of messages from RabbitMQ. 
+ * 
+ * <p> Two kinds of messages are supported, based on the custom HasContent 
+ * header. For HasContent = true, the body is saved as a file to disk.
+ * For HasContent = false, the body is interpreted as a list of UUIDs with
+ * optional URLs. The UUIDs and URLs are simply logged.
+ */
 public class FileReceiver {
     private static final Logger logger = LoggerFactory.getLogger(FileReceiver.class);
 
@@ -44,7 +43,8 @@ public class FileReceiver {
     private Map<String, Object> rabbitMq;
 
     /** Directory in which to write received files. */
-    private File directory;
+    private File directory;   
+
 
     @SuppressWarnings("unchecked")
     public FileReceiver(File dir) {
@@ -98,33 +98,16 @@ public class FileReceiver {
         return consumer;
     }
 
-    private class MessageStruct {
-        public String filename = "";
-        public byte[] content;
-    };
-
     /** Process received messages until there's an interrupt. */
     private void processMessagesForever(QueueingConsumer consumer) throws InterruptedException {
         while (true) {
-            // Get a message's contents
-            MessageStruct msgStruct = unwrapMessage(consumer);
-
-            // Save the received file
-            File f = new File(directory, msgStruct.filename);
-            try {
-               logger.info("     Writing file '" + msgStruct.filename + "'");
-                writeFile(f, msgStruct.content);
-            } catch (IOException e) {
-                logger.error("Unable to save file '" + f + "' because of IOException");
-            }
-
+            // Wait for a message and extract or report its contents
+            unwrapMessage(consumer);
         }
     }
 
     /** Extract the content from a message. */
-    private MessageStruct unwrapMessage(QueueingConsumer consumer) throws InterruptedException {
-        MessageStruct msgStruct = new MessageStruct();
-
+    private void unwrapMessage(QueueingConsumer consumer) throws InterruptedException {
         // Get a message from a delivery
         QueueingConsumer.Delivery delivery = consumer.nextDelivery();
         String message = new String(delivery.getBody());
@@ -141,25 +124,90 @@ public class FileReceiver {
 
         if (headers == null) {
             logger.error("null headers");
-            return msgStruct;
+            return;
         }
 
-        try {
-            String hasContent = headers.get("HasContent").toString();
-            if (hasContent.equals("false")) {
-                String docId = message;
-                System.err.printf("Fetching doc %s from document-service%n", docId);
-                DocumentObject doc = docServiceClient.fetch(docId);
-                msgStruct.filename = docId;
-                msgStruct.content = doc.getDataAsBytes();
-            } else {
-                msgStruct.filename = UUID.randomUUID().toString();
-                msgStruct.content = message.getBytes();
-            }
-        } catch (DocServiceException e) {
-            e.printStackTrace();
+        String hasContent = headers.get("HasContent").toString();
+        if (hasContent.equals("false")) {
+            // Message consists of a listing of one or more lines,
+            // where each line contains a UUID and an optional URL,
+            // separated by whitespace.
+            processNoncontentMessage(message);
+        } else {
+            // Has full content
+            processContentMessage(message);
         }
-        return msgStruct;
+    }
+    
+    /** Processes a message containing the actual file content. */
+    private void processContentMessage(String message) {
+        // Use a UUID for the filename
+        String filename = UUID.randomUUID().toString();
+        
+        // Get the content
+        byte[] content = message.getBytes();
+
+        // Save the received file
+        File f = new File(directory, filename);
+        try {
+            String indent = "     ";
+            logger.info(indent + String.format("Writing file '%s'", filename));
+            
+            writeFile(f, content);
+        } 
+        catch (IOException e) {
+            logger.error(String.format("Unable to save file '%s' because of IOException", f));
+        }        
+    }
+
+    /** Processes a message containing document UUIDs with optional URLs. */
+    private void processNoncontentMessage(String message) {
+        // Extract the lines of the message
+        String[] lines = message.split("\n");
+        
+        // Log the count
+        String indent = "     ";
+        String lineCountStr = pluralize(lines.length, "line"); 
+        logger.info(indent + String.format("Message consists of %s", lineCountStr));
+        
+        indent += "    ";
+        
+        // For each line
+        for (String line : lines) {
+            // Default values
+            String docId = "NONE";
+            String url = "NONE";
+            
+            // Tokenize on whitespace
+            String[] token = line.split("\\s+");
+            
+            // UUID
+            if (token.length > 0) {
+                docId = token[0];
+            }
+            
+            // URL
+            if (token.length > 1) {
+                url = token[1];
+            }
+            
+            // Log the UUID and URL
+            logger.info(indent + String.format("ID: %s  URL: %s", docId, url));
+            
+            // NOTE: This is sufficient to demonstrate the message is received
+            // correctly. We no longer retrieve the file from the document store.
+        }
+    }
+    
+    /** 
+     * Gets the singular or plural form depending on the count.
+     * 
+     * @param n         The count
+     * @param singular  Singular form of unit
+     */
+    static private String pluralize(int n, String singular) {
+        String str = String.format("%d %s%s", n, singular, (n == 1)? "":"s");
+        return str;
     }
 
     /**
@@ -191,7 +239,7 @@ public class FileReceiver {
             parser.parse(args);
 
             if (parser.found("-file") && parser.found("-url")) {
-                throw new UsageException("Can't specify both file and URL");
+                throw new CommandLine.UsageException("Can't specify both file and URL");
             } else if (parser.found("-file")) {
                 // Set up config to be from file
                 String configFilename = parser.getValue();
@@ -207,7 +255,7 @@ public class FileReceiver {
             File receiveDir = new File("data/Receive");
             FileReceiver receiver = new FileReceiver(receiveDir);
             receiver.receive();
-        } catch (UsageException e) {
+        } catch (CommandLine.UsageException e) {
             System.err.println("Usage: FileReceiver (-file configFile | -url configUrl)");
             System.exit(1);
         }
