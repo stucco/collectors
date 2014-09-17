@@ -1,4 +1,4 @@
 #!/bin/bash
 
-# Run outside the VM and at top level of the development directories
-java -Xmx2048m -jar collectors/target/scheduler.jar -file config/stucco.yml -section scheduler
+# Run outside the VM, in the collectors directory
+java -Xmx2048m -jar target/scheduler.jar -file ../config/stucco.yml -section scheduler &
