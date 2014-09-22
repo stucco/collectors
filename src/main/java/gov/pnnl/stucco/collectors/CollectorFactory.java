@@ -33,6 +33,9 @@ public class CollectorFactory {
         } else if (collectorType.equalsIgnoreCase("BUGTRAQ")) {
             CollectorBugtraqVulnerabilities rssCollector = new CollectorBugtraqVulnerabilities(configData);
             aCollector = rssCollector;
+        } else if (collectorType.equalsIgnoreCase("SOPHOS")) {
+            CollectorSophosEntry rssCollector = new CollectorSophosEntry(configData);
+            aCollector = rssCollector;
         }
         
         return aCollector;

@@ -140,6 +140,12 @@ public class CollectorRssImpl extends CollectorHttp {
     private void obtainFeedPages(SyndFeed feed, String sourceName) {
         Map<String, String> webConfig = new HashMap<String, String>();
 
+        // Get the type of the pages in the feed
+        String subtype = collectorConfigData.get("rss-subtype");
+        if (subtype == null) {
+            subtype = "WEB";
+        }
+        
         // Retrieve the web page from each entry
         List<SyndEntryImpl> entries = feed.getEntries();
         for (SyndEntryImpl entry : entries) {
@@ -147,7 +153,7 @@ public class CollectorRssImpl extends CollectorHttp {
             
             // Set the configuration info needed by the web collector
             webConfig.clear();
-            webConfig.put("type", "WEB");
+            webConfig.put("type", subtype);
             webConfig.put("source-name", sourceName);
             webConfig.put("source-URI", link);
             webConfig.put("content-type", "text/html");
@@ -167,7 +173,7 @@ public class CollectorRssImpl extends CollectorHttp {
     /** Test driver used during development. */
     static public void main(String[] args) {
         try {
-//            String url = "http://seclists.org/rss/fulldisclosure.rss";                 // OK: HEAD conditional
+            String url = "http://seclists.org/rss/fulldisclosure.rss";                 // OK: HEAD conditional
 //            String url = "http://www.reddit.com/r/netsec/new.rss";                     // FAIL: HEAD conditional or GET SHA-1, but 'ups', 'score', comments change ~10 seconds
 //            String url = "https://technet.microsoft.com/en-us/security/rss/bulletin";  // FAIL: Items contain IDs that change
 //            String url = "http://www.f-secure.com/exclude/vdesc-xml/latest_50.rss";    // OK: HEAD Last-Modified
@@ -176,11 +182,12 @@ public class CollectorRssImpl extends CollectorHttp {
 //            String url = "https://blog.damballa.com/feed";                             // 403 Forbidden
 //            String url = "https://evilzone.org/.xml/?type=rss";                        // SSLHandshakeException
 //            String url = "http://rss.packetstormsecurity.com/files/";                  // OK: HEAD Last-Modified
-            String url = "http://www.sophos.com/en-us/rss/threats/latest-viruses.xml";
+//            String url = "http://www.sophos.com/en-us/rss/threats/latest-viruses.xml";
             
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);
+            configData.put("rss-subtype", "WEB");
             CollectorHttp collector = new CollectorRssImpl(configData);
             System.err.println("COLLECTION #1");
             collector.collect();
