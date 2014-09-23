@@ -16,11 +16,17 @@ import java.net.HttpURLConnection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 
 public class CollectorWebPageImpl extends CollectorHttp {    
     
+    /** Whether we will save the collected content to the document store. */
+    protected boolean storing = true;
+    
+    /** Whether we will send a message for the collected content. */
+    protected boolean messaging = true;
+
+
     /** 
      * constructor for obtaining the contents of a webpage
      * @param URI - where to get the contents on the web
@@ -28,6 +34,14 @@ public class CollectorWebPageImpl extends CollectorHttp {
      */
     public CollectorWebPageImpl(Map<String, String> configData) {
         super(configData);
+    }
+    
+    final public void setStoring(boolean flag) {
+        storing = flag;
+    }
+    
+    final public void setMessaging(boolean flag) {
+        messaging = flag;
     }
     
     @Override
@@ -139,6 +153,20 @@ public class CollectorWebPageImpl extends CollectorHttp {
     @Override
     public void clean() {
         rawContent = null;
+    }
+    
+    /**
+     * Stores the collected document to the document store.
+     * 
+     * @throws DocServiceException
+     */
+    protected void storeDocument() throws DocServiceException {
+        if (storing) {
+            // Send to document store
+            String contentType = messageMetadata.get("contentType");
+            DocumentObject doc = new DocumentObject(rawContent, contentType);
+            docServiceClient.store(doc, docId);
+        }
     }
     
     // Overridden to separate ID generation, document storage, and messaging

@@ -2,16 +2,12 @@ package gov.pnnl.stucco.collectors;
 
 import java.util.Map;
 
-public class CollectorSophosEntry extends CollectorWebPageImpl {
+
+public class CollectorSophosEntry extends CollectorHttp { 
 
     public CollectorSophosEntry(Map<String, String> configData) {
         super(configData);
-        
-        // This collector won't store what it directly collects; its delegate
-        // collectors will store the tabbed pages.
-        setStoring(false);
     }
-
 
     @Override
     public void collect() {
@@ -47,5 +43,4 @@ public class CollectorSophosEntry extends CollectorWebPageImpl {
         rawContent = messageBuffer.toString().getBytes();
         messageSender.sendIdMessage(messageMetadata, rawContent);
     }
-
 }

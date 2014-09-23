@@ -1,7 +1,5 @@
 package gov.pnnl.stucco.collectors;
 
-import gov.pnnl.stucco.doc_service_client.DocServiceException;
-import gov.pnnl.stucco.doc_service_client.DocumentObject;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
 
 import java.io.IOException;
@@ -15,6 +13,7 @@ import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 /**
  * Base class for collectors making HTTP or HTTPS requests.
@@ -38,12 +37,6 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     /** UUID assigned to the collected content. */
     protected String docId = "";
     
-    /** Whether we will save the collected content to the document store. */
-    protected boolean storing = true;
-    
-    /** Whether we will send a message for the collected content. */
-    protected boolean messaging = true;
-
     /** Content of the message that got sent (empty if there wasn't one). */
     protected byte[] messageContent = new byte[0];
 
@@ -53,14 +46,6 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         
         sourceUri = configData.get(SOURCE_URI);  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
         messageMetadata.put("sourceUrl", sourceUri);
-    }
-    
-    final public void setStoring(boolean flag) {
-        storing = flag;
-    }
-    
-    final public void setMessaging(boolean flag) {
-        messaging = flag;
     }
     
     final public String getDocId() {
@@ -261,19 +246,5 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     protected void assignDocId() {
         // Assign a document ID
         docId = UUID.randomUUID().toString();
-    }
-
-    /**
-     * Stores the collected document to the document store.
-     * 
-     * @throws DocServiceException
-     */
-    protected void storeDocument() throws DocServiceException {
-        if (storing) {
-            // Send to document store
-            String contentType = messageMetadata.get("contentType");
-            DocumentObject doc = new DocumentObject(rawContent, contentType);
-            docServiceClient.store(doc, docId);
-        }
     }
 }

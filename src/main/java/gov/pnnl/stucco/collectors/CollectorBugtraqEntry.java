@@ -8,7 +8,7 @@ import java.util.Map;
  * same as subpage "http://www.securityfocus.com/bid/\d+/info". Other subpages
  * use similar URLs for "discuss", "exploit", "solution", and "references". 
  */
-public class CollectorBugtraqEntry extends CollectorWebPageImpl {
+public class CollectorBugtraqEntry extends CollectorHttp {
 
     /** 
      * Creates a collector for a Bugtraq entry. 
@@ -19,11 +19,7 @@ public class CollectorBugtraqEntry extends CollectorWebPageImpl {
      */
     public CollectorBugtraqEntry(Map<String, String> configData) {
         super(configData);
-        
-        // This collector won't store what it directly collects; its delegate
-        // collectors will store the tabbed pages.
-        setStoring(false);
-    }
+     }
 
     @Override
     public void collect() {
