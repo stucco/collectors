@@ -1,5 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,9 +25,6 @@ public class CollectorBugtraqEntry extends CollectorHttp {
 
     @Override
     public void collect() {
-        // Start the entry message
-        StringBuilder messageBuffer = new StringBuilder();
-        
         // Prepare to generate tab URLs
         String baseUri = sourceUri;
         if (!baseUri.endsWith("/")) {
@@ -33,31 +32,13 @@ public class CollectorBugtraqEntry extends CollectorHttp {
         }
         String[] tabs = { "info", "discuss", "exploit", "solution", "references" };
         
-        // For each tab
+        // Generate tab URLs
+        List<String> urls = new ArrayList<String>(tabs.length);
         for (String tab : tabs) {
-
-            // Create URL and collector
             String url = baseUri + tab;
-            collectorConfigData.put(SOURCE_URI, url);
-            CollectorWebPageImpl tabCollector = new CollectorWebPageImpl(collectorConfigData);
-            
-            // The Stucco message will be handled by this entry collector instead of the tab collector
-            tabCollector.setMessaging(false);
-            
-            // Collect the tab
-            tabCollector.collect();
-            
-            // Add ID and URL to the entry message
-            String tabDocId = tabCollector.getDocId();
-            messageBuffer.append(tabDocId);
-            messageBuffer.append(" ");
-            messageBuffer.append(url);
-            messageBuffer.append("\n");
+            urls.add(url);
         }
         
-        // Send the Stucco message
-        rawContent = messageBuffer.toString().getBytes();
-        messageSender.sendIdMessage(messageMetadata, rawContent);
+        collectAndAggregateUrls(urls);
     }
-
 }

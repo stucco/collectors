@@ -14,23 +14,14 @@ import org.slf4j.LoggerFactory;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
-public class CollectorFileImpl extends CollectorAbstractBase {
+public class CollectorFileImpl extends CollectorFileBase {
     private static final Logger logger = LoggerFactory.getLogger(CollectorFileImpl.class);
-
-    /** file from which we are obtaining content */
-    private File m_filename;
 
     /** Sets up a sender for a directory. */
     public CollectorFileImpl(Map<String, String> configData) {
         super(configData);
 
-        String filename = configData.get("source-URI");
-        File f = new File(filename);
-        if (f.isDirectory()) {
-            throw new IllegalArgumentException(f + "is a directory, not a file");
-        }
-
-        m_filename = f;
+        setFilenameFromConfig(configData);
     }
 
     /** Collects the content and sends it to the queue in a message. */
@@ -53,10 +44,10 @@ public class CollectorFileImpl extends CollectorAbstractBase {
     public void collectOnly() {
         try {
             // Read the file
-            rawContent = readFile(m_filename);
+            rawContent = readFile(contentFile);
             timestamp = new Date();
         } catch (IOException e) {
-            logger.error("Unable to collect '" + m_filename.toString() + "' because of IOException", e);
+            logger.error("Unable to collect '" + contentFile.toString() + "' because of IOException", e);
         }
     }
 

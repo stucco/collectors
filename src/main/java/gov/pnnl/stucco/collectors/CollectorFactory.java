@@ -13,32 +13,33 @@ public class CollectorFactory {
      * @param configData  Configuration data specific to a given collector
      */
     public static Collector makeCollector(Map<String, String> configData) {
-        String collectorType = configData.get("type");
-        Collector aCollector = null;
-        if(collectorType.equalsIgnoreCase("WEB")) {
-            CollectorWebPageImpl webCollector = new CollectorWebPageImpl(configData);
-            aCollector = webCollector;
-        } else if(collectorType.equalsIgnoreCase("FILE")) {
-            CollectorFileImpl fileCollector = new CollectorFileImpl(configData);
-            aCollector = fileCollector;
-        } else if(collectorType.equalsIgnoreCase("FILEBYLINE")) {
-            CollectorFileByLineImpl fileByLineCollector = new CollectorFileByLineImpl(configData);
-            aCollector = fileByLineCollector;
-        } else if(collectorType.equalsIgnoreCase("DIRECTORY")) {
-            CollectorDirectoryImpl dirCollector = new CollectorDirectoryImpl(configData);
-            aCollector = dirCollector;
-        } else if (collectorType.equalsIgnoreCase("RSS")) {
-            CollectorRssImpl rssCollector = new CollectorRssImpl(configData);
-            aCollector = rssCollector;
-        } else if (collectorType.equalsIgnoreCase("BUGTRAQ")) {
-            CollectorBugtraqVulnerabilities rssCollector = new CollectorBugtraqVulnerabilities(configData);
-            aCollector = rssCollector;
-        } else if (collectorType.equalsIgnoreCase("SOPHOS")) {
-            CollectorSophosEntry rssCollector = new CollectorSophosEntry(configData);
-            aCollector = rssCollector;
+        String collectorType = configData.get("type");     
+        switch (collectorType.toUpperCase()) {
+            case "WEB":
+                return new CollectorWebPageImpl(configData);
+                
+            case "FILE":
+                return new CollectorFileImpl(configData);
+                
+            case "FILEBYLINE":
+                return new CollectorFileByLineImpl(configData);
+                
+            case "DIRECTORY":
+                return new CollectorDirectoryImpl(configData);
+                
+            case "RSS":
+                return new CollectorRssImpl(configData);
+                
+            case "BUGTRAQ":
+                return new CollectorBugtraqVulnerabilities(configData);
+                
+            case "SOPHOS":
+                return new CollectorSophosEntry(configData);
+                
+            default:
+                break;
         }
-        
-        return aCollector;
+        return null;
     }
 
 }

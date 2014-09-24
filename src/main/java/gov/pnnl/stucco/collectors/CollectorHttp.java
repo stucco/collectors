@@ -8,6 +8,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -246,5 +247,35 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     protected void assignDocId() {
         // Assign a document ID
         docId = UUID.randomUUID().toString();
+    }
+
+    /** Collects a list of URLs and sends a single aggregate message for them. */
+    protected void collectAndAggregateUrls(List<String> urls) {
+        // Start the entry message
+        StringBuilder messageBuffer = new StringBuilder();
+        
+        // For each tab
+        for (String url : urls) {
+            // Create URL and collector
+            collectorConfigData.put(SOURCE_URI, url);
+            CollectorWebPageImpl tabCollector = new CollectorWebPageImpl(collectorConfigData);
+            
+            // The Stucco message will be handled by this entry collector instead of the tab collector
+            tabCollector.setMessaging(false);
+            
+            // Collect the tab
+            tabCollector.collect();
+            
+            // Add ID and URL to the entry message
+            String tabDocId = tabCollector.getDocId();
+            messageBuffer.append(tabDocId);
+            messageBuffer.append(" ");
+            messageBuffer.append(url);
+            messageBuffer.append("\n");
+        }
+        
+        // Send the Stucco message
+        rawContent = messageBuffer.toString().getBytes();
+        messageSender.sendIdMessage(messageMetadata, rawContent);
     }
 }
