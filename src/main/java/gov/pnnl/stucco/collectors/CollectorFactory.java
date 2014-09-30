@@ -35,6 +35,9 @@ public class CollectorFactory {
                 
             case "SOPHOS":
                 return new CollectorSophosEntry(configData);
+            
+            case "NVD":
+                return new CollectorNVDPageImpl(configData);
                 
             default:
                 break;
