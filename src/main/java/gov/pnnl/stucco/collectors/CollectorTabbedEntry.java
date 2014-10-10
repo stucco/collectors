@@ -108,46 +108,12 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
     }
 
     public static void main(String[] args) {
-//        try {
             // Test URL
             String url = "http://www.securityfocus.com/bid/70094";
-//            URI baseUri = new URI(url);
 
             // Regex for identifying tabs
             String tabRegEx = "href=\"(/bid/\\d+/(info|discuss|exploit|solution|references))\"";
-//            String tabRegEx = "href=\"(/bid/\\d+/info)\"";
-//            tabRegEx += "|href=\"(/bid/\\d+/discuss)\"";
-//            tabRegEx += "|href=\"(/bid/\\d+/exploit)\"";
-//            tabRegEx += "|href=\"(/bid/\\d+/solution)\"";
-//            tabRegEx += "|href=\"(/bid/\\d+/references)\"";
 
-//            // String to test regex on
-//            String content = "<ul>\n" +
-//                            "<li class=\"here\"><a href=\"/bid/70094/info\">info</a></li>\n" +
-//                            "<li><a href=\"/bid/70094/discuss\">discussion</a></li>\n" +
-//                            "<li><a href=\"/bid/70094/exploit\">exploit</a></li>\n" +
-//                            "<li><a href=\"/bid/70094/solution\">solution</a></li>\n" +
-//                            "<li><a href=\"/bid/70094/references\">references</a></li>\n" +
-//                            "</ul>";
-//            
-//            // Build the matcher
-//            Pattern pattern = Pattern.compile(tabRegEx);
-//            Matcher matcher = pattern.matcher(content);
-//            
-//            // For each match in the test content
-//            while (matcher.find()) {
-//                
-//                // Get the first captured group (we expect only one)
-//                String capture = CollectorTabbedEntry.getFirstCapture(matcher);
-//                
-//                if (capture != null) {
-//                    // Print it, before/after resolving it
-//                    System.err.println(capture);
-//                    URI tabUri = baseUri.resolve(capture);
-//                    System.err.println(tabUri);
-//                }
-//            }
-            
             // Set configuration for the collector
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
@@ -157,11 +123,5 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
             // Run the test collection
             CollectorTabbedEntry collector = new CollectorTabbedEntry(configData);
             collector.collect();
-//        } 
-//        catch (URISyntaxException e) {
-//            e.printStackTrace();
-//        }
-        
-        
     }
 }
