@@ -20,6 +20,9 @@ import java.util.Map;
 
 public class CollectorWebPageImpl extends CollectorHttp {    
     
+    // Config key
+    public static final String TAB_REGEX_KEY = "tabRegEx";
+
     /** Whether we will save the collected content to the document store. */
     protected boolean storing = true;
     
@@ -95,7 +98,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
                 eTag = "";
             }
             
-           // Get the content as a byte array, and compute its checksum
+            // Get the content as a byte array, and compute its checksum
             byte[] content = null;
             try (
                     BufferedInputStream in = new BufferedInputStream(connection.getInputStream());

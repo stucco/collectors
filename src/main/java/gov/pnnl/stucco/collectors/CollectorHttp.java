@@ -4,13 +4,18 @@ import gov.pnnl.stucco.utilities.CollectorMetadata;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -247,6 +252,55 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     protected void assignDocId() {
         // Assign a document ID
         docId = UUID.randomUUID().toString();
+    }
+
+    /** Parses the entry URLs from the page content. */
+    protected List<String> scrapeUrls(String regEx) {
+        List<String> urlList = new ArrayList<String>();
+    
+        try {
+            // Convert bytes to String
+            String page = new String(rawContent);
+            
+            // Prepare the regex to find the URLs
+            Pattern pattern = Pattern.compile(regEx);
+            Matcher matcher = pattern.matcher(page);
+    
+            URI source = new URI(sourceUri);
+            
+            // For each match of the regex
+            while (matcher.find()) {
+                // Grab the matching URL
+                String match = getFirstCapture(matcher);
+                
+                // If it's a relative path, convert to absolute
+                match = source.resolve(match).toString();
+                
+                // Save it
+                urlList.add(match);
+            }
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+        }
+        
+        return urlList;
+    }
+
+    /** Gets the Matcher's first captured group (or null if nothing got captured. */
+    private static String getFirstCapture(Matcher matcher) {
+        // Check each capturing group
+        int groupCount = matcher.groupCount();
+        for (int i = 1; i <= groupCount; i++) {
+            String group = matcher.group(i);
+            
+            if (group != null) {
+                // Return the first one that captured anything
+                return group;
+            }
+        }
+        
+        // Nothing captured
+        return null;
     }
 
     /** Collects a list of URLs and sends a single aggregate message for them. */
