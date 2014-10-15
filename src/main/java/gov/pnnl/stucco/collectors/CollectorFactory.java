@@ -35,6 +35,12 @@ public class CollectorFactory {
                 
             case "SOPHOS":
                 return new CollectorSophosEntry(configData);
+            
+            case "PAGE_SEQUENCE":
+                return new CollectorPageSequence(configData);
+            
+            case "TABBED_ENTRY":
+                return new CollectorTabbedEntry(configData);
                 
             default:
                 break;

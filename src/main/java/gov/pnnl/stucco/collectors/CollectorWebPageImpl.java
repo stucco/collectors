@@ -20,9 +20,6 @@ import java.util.Map;
 
 public class CollectorWebPageImpl extends CollectorHttp {    
     
-    // Config key
-    public static final String TAB_REGEX_KEY = "tabRegEx";
-
     /** Whether we will save the collected content to the document store. */
     protected boolean storing = true;
     
@@ -207,7 +204,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);
-            CollectorWebPageImpl collector = new CollectorWebPageImpl(configData);
+            CollectorHttp collector = new CollectorWebPageImpl(configData);
 //            try {
 //                collector.obtainWebPage("https://isc.sans.edu/diary.html?storyid=18311&rss");
 //            }

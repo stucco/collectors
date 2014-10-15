@@ -29,11 +29,14 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     /** Configuration data key for a collector's URI. */
     protected static final String SOURCE_URI = "source-URI";
 
+    /** Configuration data key for a regex for finding tabbed subpages. */
+    protected static final String TAB_REGEX_KEY = "tabRegEx";
+    
     protected static final Logger logger = LoggerFactory.getLogger(CollectorHttp.class);
     
     /** Number of milliseconds to allow for making a connection. */
     private static final int TIMEOUT = 15 * 1000;
-    
+
     /** Metadata about the pages we've collected. */
     protected static CollectorMetadata pageMetadata = CollectorMetadata.getInstance();
 
@@ -331,5 +334,26 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         // Send the Stucco message
         rawContent = messageBuffer.toString().getBytes();
         messageSender.sendIdMessage(messageMetadata, rawContent);
+    }
+
+    /**
+     * Gets a Collector suitable for an entry from an RSS (or other) feed.  
+     * The collector type tries to has tabbed subpages.
+     */
+    protected Collector getEntryCollector(String entryUrl) {
+        collectorConfigData.put(SOURCE_URI, entryUrl);
+        Collector entryCollector;
+        
+        String tabRegEx = collectorConfigData.get(TAB_REGEX_KEY);
+        if (tabRegEx == null) {
+            // Entry is a normal web page
+            entryCollector = new CollectorWebPageImpl(collectorConfigData);
+        }
+        else {
+            // Entry consists of multiple tabs
+            entryCollector = new CollectorTabbedEntry(collectorConfigData);
+        }
+        
+        return entryCollector;
     }
 }
