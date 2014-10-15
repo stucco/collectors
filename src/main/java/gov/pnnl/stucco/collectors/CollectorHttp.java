@@ -30,7 +30,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     protected static final String SOURCE_URI = "source-URI";
 
     /** Configuration data key for a regex for finding tabbed subpages. */
-    protected static final String TAB_REGEX_KEY = "tabRegEx";
+    protected static final String TAB_REGEX_KEY = "tab-regex";
     
     protected static final Logger logger = LoggerFactory.getLogger(CollectorHttp.class);
     

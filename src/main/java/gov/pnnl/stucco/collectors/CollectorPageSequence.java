@@ -14,8 +14,8 @@ import java.util.Map;
 public class CollectorPageSequence extends CollectorWebPageImpl {
 
     // Config keys
-    public static final String ENTRY_REGEX_KEY = "entryRegEx";
-    public static final String MORE_REGEX_KEY = "moreRegEx";
+    public static final String ENTRY_REGEX_KEY = "entry-regex";
+    public static final String MORE_REGEX_KEY = "more-regex";
     
     /** Limit on the number of entries to process. */
     private int maxEntries = Integer.MAX_VALUE;
