@@ -16,6 +16,7 @@ import org.quartz.JobDetail;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
+import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,52 +44,34 @@ public class CollectorScheduler {
                 Map<String, Object> collectorConfig = (Map<String, Object>) obj;
                 JobDataMap jobData = CollectorJob.convertToJobDataMap(collectorConfig);
                 
-                // Get scheduling info from configuration
+                // Get info from configuration
+                
+                // URI
                 String uri = (String) collectorConfig.get("source-URI");
+                
+                // What to do on start up
+                String startUp = (String) collectorConfig.get("now-collect");
+                startUp = (startUp == null)? "none" : startUp.trim();
+                
+                // The schedule
                 String cronExpr = ((String) collectorConfig.get("cron"));
-                if (cronExpr == null) {
-                    cronExpr = "";
-                }
-                else {
-                    cronExpr = cronExpr.trim();
+                cronExpr = (cronExpr == null)? "" : cronExpr.trim();
+                
+                
+                // We'll collect at startup and/or on a schedule
+                
+                if (!startUp.equalsIgnoreCase("none")) {
+                    // At startup
+                    scheduleJob(sched, jobData, uri, "now");
                 }
                 
-                // Some IDs
-                String jobName = uri;
-                String triggerName = uri;
-                String groupName = "Stucco";
-                
-                // Define the job
-                JobDetail job = newJob(CollectorJob.class)
-                        .withIdentity(jobName, groupName)
-                        .setJobData(jobData)
-                        .build();
-
-                // Define a trigger
                 if (CronExpression.isValidExpression(cronExpr)) {
-                    // Build the trigger with a cron schedule
-                    Trigger trigger = newTrigger()
-                            .withIdentity(triggerName, groupName)
-                            .startNow()
-                            .withSchedule(cronSchedule(cronExpr))
-                            .build();
-                    sched.scheduleJob(job, trigger);
-                }
-                else if (cronExpr.equalsIgnoreCase("now")) {
-                    // Build the trigger to fire immediately, the default behavior.
-                    Trigger trigger = newTrigger()
-                            .withIdentity(triggerName, groupName)
-                            .startNow()
-                            .build();
-                    sched.scheduleJob(job, trigger);
-                    
-                    // Note: As always, if the collector is making a timestamp 
-                    // check, it may opt to not collect the URI. We may decide 
-                    // we want an option to force collection.
+                    // On a schedule
+                    scheduleJob(sched, jobData, uri, cronExpr);
                 }
                 else if (cronExpr.isEmpty()) {
                     // No expression, treat as commented out
-                    log.info("URI \"{}\" skipped because of missing cron expression", uri);
+                    log.info("URI \"{}\" has no cron expression", uri);
                 }
                 else {
                     // Not a recognized schedule specification
@@ -108,7 +91,56 @@ public class CollectorScheduler {
             e.printStackTrace();
         }
         System.exit(1);
+    }
+    
+    /**
+     * Schedules a Quartz job/trigger pair.
+     * 
+     * @param sched
+     * Quartz scheduler
+     * 
+     * @param jobData
+     * Any data parameters needed by the job
+     * 
+     * @param name
+     * Name to use for the job and trigger
+     * 
+     * @param cronExpr
+     * Quartz-style cron expression or the word "now" (for immediate execution)
+     * 
+     * @throws SchedulerException if unable to schedule
+     */
+    private void scheduleJob(Scheduler sched, JobDataMap jobData, String name, String cronExpr) throws SchedulerException  {
+        boolean immediate = cronExpr.equalsIgnoreCase("now");
+        
+        // Set up various identifiers
+        String jobName = name;
+        String triggerName = name;
+        String groupName = immediate? "startup" : "cron";
+        
+        // Define the job
+        JobDetail job = newJob(CollectorJob.class)
+                .withIdentity(jobName, groupName)
+                .setJobData(jobData)
+                .build();
+        
+        // Shared part of trigger set up
+        TriggerBuilder<Trigger> builder = newTrigger()
+                .withIdentity(triggerName, groupName)
+                .startNow();
+        
+        // Build the trigger
+        Trigger trigger = null;
+        if (immediate) {
+            //... for immediate running
+            trigger = builder.build();
+        }
+        else if (CronExpression.isValidExpression(cronExpr)) {
+            //... for a cron schedule
+            trigger = builder.withSchedule(cronSchedule(cronExpr)).build();
+        }
 
+        sched.scheduleJob(job, trigger);
     }
 
     @SuppressWarnings("unchecked")
