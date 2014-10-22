@@ -37,7 +37,7 @@ public class CollectorFactory {
                 return new CollectorSophosEntry(configData);
             
             case "PSEUDO_RSS":
-                return new CollectorPageSequence(configData);
+                return new CollectorPseudoRss(configData);
             
             case "TABBED_ENTRY":
                 return new CollectorTabbedEntry(configData);

@@ -11,7 +11,7 @@ import java.util.Map;
  * Collector for gathering a sequence of pages that list entries, 
  * similar to an RSS feed.
  */
-public class CollectorPageSequence extends CollectorWebPageImpl {
+public class CollectorPseudoRss extends CollectorWebPageImpl {
 
     // Config keys
     public static final String ENTRY_REGEX_KEY = "entry-regex";
@@ -47,7 +47,7 @@ public class CollectorPageSequence extends CollectorWebPageImpl {
     }
     
     
-    public CollectorPageSequence(Map<String, String> configData) {
+    public CollectorPseudoRss(Map<String, String> configData) {
         super(configData);
     }
     
@@ -192,7 +192,7 @@ public class CollectorPageSequence extends CollectorWebPageImpl {
         collectorConfigData.put(TAB_REGEX_KEY, tabRegEx);
         collectorConfigData.put(NEXT_PAGE_REGEX_KEY, nextPageRegEx);
         
-        CollectorPageSequence collector = new CollectorPageSequence(collectorConfigData);
+        CollectorPseudoRss collector = new CollectorPseudoRss(collectorConfigData);
         collector.setMaxEntries(1);
         collector.setStopOnRepeatEntry(false);
         collector.collect();
