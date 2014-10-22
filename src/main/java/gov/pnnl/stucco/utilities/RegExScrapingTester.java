@@ -1,24 +1,18 @@
 package gov.pnnl.stucco.utilities;
 
+import gov.pnnl.stucco.utilities.CommandLine.UsageException;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import gov.pnnl.stucco.collectors.CollectorWebPageImpl;
-import gov.pnnl.stucco.collectors.Config;
-import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 
 /** 
  * Debug class for testing out a regex scraping of a web page. 
@@ -83,7 +77,9 @@ public class RegExScrapingTester {
                 match = source.resolve(match).toString();
                 
                 // Save it
-                urlList.add(match);
+                if (!urlList.contains(match)) {
+                    urlList.add(match);
+                }
             }
         } catch (URISyntaxException e) {
             e.printStackTrace();

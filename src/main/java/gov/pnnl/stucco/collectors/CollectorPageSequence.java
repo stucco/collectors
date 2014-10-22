@@ -15,7 +15,7 @@ public class CollectorPageSequence extends CollectorWebPageImpl {
 
     // Config keys
     public static final String ENTRY_REGEX_KEY = "entry-regex";
-    public static final String MORE_REGEX_KEY = "more-regex";
+    public static final String NEXT_PAGE_REGEX_KEY = "next-page-regex";
     
     /** Limit on the number of entries to process. */
     private int maxEntries = Integer.MAX_VALUE;
@@ -84,7 +84,7 @@ public class CollectorPageSequence extends CollectorWebPageImpl {
     }
 
     /**
-     * Collects one listing page (and entries), then goes to next page.
+     * Collects one listing page (and entries), then returns URL for the next page.
      * 
      * @param pageUrl  Current page's URL
      * 
@@ -163,11 +163,11 @@ public class CollectorPageSequence extends CollectorWebPageImpl {
         String nextPageUrl = null;
         
         // Try scraping a regex to get the URL for the next page
-        String moreRegEx = collectorConfigData.get(MORE_REGEX_KEY);
-        if (moreRegEx != null) {
-            List<String> moreList = scrapeUrls(moreRegEx);
-            if (!moreList.isEmpty()) {
-                nextPageUrl = moreList.get(0);
+        String nextPageRegEx = collectorConfigData.get(NEXT_PAGE_REGEX_KEY);
+        if (nextPageRegEx != null) {
+            List<String> nextPageList = scrapeUrls(nextPageRegEx);
+            if (!nextPageList.isEmpty()) {
+                nextPageUrl = nextPageList.get(0);
             }
         }
         
@@ -182,7 +182,7 @@ public class CollectorPageSequence extends CollectorWebPageImpl {
         // Regexes for identifying various URLs
         String entryRegEx = "href=\"(/bid/\\d+)\"";
         String tabRegEx = "href=\"(/bid/\\d+/(info|discuss|exploit|solution|references))\"";
-        String moreRegEx = "href=\"(/cgi-bin/index\\.cgi\\?o[^\"]+)\">Next &gt;";
+        String nextPageRegEx = "href=\"(/cgi-bin/index\\.cgi\\?o[^\"]+)\">Next &gt;";
         
         Config.setConfigFile(new File("../config/stucco.yml"));
         Map<String, String> collectorConfigData = new HashMap<String, String>();
@@ -190,7 +190,7 @@ public class CollectorPageSequence extends CollectorWebPageImpl {
         
         collectorConfigData.put(ENTRY_REGEX_KEY, entryRegEx);
         collectorConfigData.put(TAB_REGEX_KEY, tabRegEx);
-        collectorConfigData.put(MORE_REGEX_KEY, moreRegEx);
+        collectorConfigData.put(NEXT_PAGE_REGEX_KEY, nextPageRegEx);
         
         CollectorPageSequence collector = new CollectorPageSequence(collectorConfigData);
         collector.setMaxEntries(1);

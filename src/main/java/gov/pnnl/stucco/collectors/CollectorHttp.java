@@ -279,8 +279,10 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                 // If it's a relative path, convert to absolute
                 match = source.resolve(match).toString();
                 
-                // Save it
-                urlList.add(match);
+                // Save it (without duplicates)
+                if (!urlList.contains(match)) {
+                    urlList.add(match);
+                }
             }
         } catch (URISyntaxException e) {
             e.printStackTrace();
@@ -289,7 +291,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         return urlList;
     }
 
-    /** Gets the Matcher's first captured group (or null if nothing got captured. */
+    /** Gets the Matcher's first captured group (or null if nothing got captured). */
     private static String getFirstCapture(Matcher matcher) {
         // Check each capturing group
         int groupCount = matcher.groupCount();

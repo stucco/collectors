@@ -36,7 +36,7 @@ public class CollectorFactory {
             case "SOPHOS":
                 return new CollectorSophosEntry(configData);
             
-            case "PAGE_SEQUENCE":
+            case "PSEUDO_RSS":
                 return new CollectorPageSequence(configData);
             
             case "TABBED_ENTRY":
