@@ -68,7 +68,9 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
                 
                 if (needToGet(pageUrl)) {
                     if (obtainWebPage(pageUrl)) {
-                        nextPageUrl = collectPage(pageUrl);
+                        if (collectEntriesFromPage(pageUrl) == EntriesCollectionStatus.GO) {;
+                            nextPageUrl = getNextPageUrl();
+                        }
                     }
                 }
 
@@ -84,13 +86,13 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
     }
 
     /**
-     * Collects one listing page (and entries), then returns URL for the next page.
+     * Collects a listing page and its entries.
      * 
-     * @param pageUrl  Current page's URL
+     * @param pageUrl  Current listing page's URL
      * 
-     * @return Next page's URL (or null if we should stop)
+     * @return Status of collecting entries.
      */
-    private String collectPage(String pageUrl) {
+    private EntriesCollectionStatus collectEntriesFromPage(String pageUrl) {
         // Get the regex for finding entry URLs
         String entryRegEx = collectorConfigData.get(ENTRY_REGEX_KEY);
         if (entryRegEx == null) {
@@ -103,13 +105,7 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
         // Collect the entries
         EntriesCollectionStatus status = collectEntries(entryList);
         
-        // Find the next page
-        String nextPageUrl = null;
-        if (status == EntriesCollectionStatus.GO) {
-            nextPageUrl = getNextPageUrl();
-        }
-        
-        return nextPageUrl;
+        return status;
     }
     
     
