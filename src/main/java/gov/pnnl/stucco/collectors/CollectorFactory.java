@@ -38,6 +38,12 @@ public class CollectorFactory {
             
             case "NVD":
                 return new CollectorNVDPageImpl(configData);
+
+            case "PSEUDO_RSS":
+                return new CollectorPseudoRss(configData);
+            
+            case "TABBED_ENTRY":
+                return new CollectorTabbedEntry(configData);
                 
             default:
                 break;

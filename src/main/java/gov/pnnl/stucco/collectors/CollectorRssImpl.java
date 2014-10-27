@@ -138,29 +138,34 @@ public class CollectorRssImpl extends CollectorHttp {
     
     /** Cycles through an RSS feed list, retrieving content from the individual URLs. */
     private void obtainFeedPages(SyndFeed feed, String sourceName) {
-        Map<String, String> webConfig = new HashMap<String, String>();
+        Map<String, String> entryConfig = new HashMap<String, String>();
 
         // Get the type of the pages in the feed
-        String subtype = collectorConfigData.get("rss-subtype");
-        if (subtype == null) {
-            subtype = "WEB";
-        }
+        String tabRegEx = collectorConfigData.get(TAB_REGEX_KEY);
         
-        // Retrieve the web page from each entry
+        // For each entry
         List<SyndEntryImpl> entries = feed.getEntries();
         for (SyndEntryImpl entry : entries) {
             String link = entry.getLink();
             
-            // Set the configuration info needed by the web collector
-            webConfig.clear();
-            webConfig.put("type", subtype);
-            webConfig.put("source-name", sourceName);
-            webConfig.put("source-URI", link);
-            webConfig.put("content-type", "text/html");
-            webConfig.put("data-type", messageMetadata.get("dataType"));
+            // Start fresh each time since the map could have been altered
+            entryConfig.clear();
             
-            // Use the web collector
-            Collector collector = CollectorFactory.makeCollector(webConfig);
+            // Set the configuration info needed by the collector
+            entryConfig.put("source-URI", link);
+            entryConfig.put("source-name", sourceName);
+            entryConfig.put("content-type", "text/html");
+            entryConfig.put("data-type", messageMetadata.get("dataType"));
+            if (tabRegEx == null) {
+                entryConfig.put("type", "WEB");
+            }
+            else {
+                entryConfig.put("type", "TABBED_ENTRY");
+                entryConfig.put(TAB_REGEX_KEY, tabRegEx);
+            }
+            
+            // Use the appropriate collector
+            Collector collector = CollectorFactory.makeCollector(entryConfig);
             collector.collect();
         }
     }
@@ -172,8 +177,8 @@ public class CollectorRssImpl extends CollectorHttp {
     
     /** Test driver used during development. */
     static public void main(String[] args) {
-        try {
-            String url = "http://seclists.org/rss/fulldisclosure.rss";                 // OK: HEAD conditional
+//        try {
+//            String url = "http://seclists.org/rss/fulldisclosure.rss";                 // OK: HEAD conditional
 //            String url = "http://www.reddit.com/r/netsec/new.rss";                     // FAIL: HEAD conditional or GET SHA-1, but 'ups', 'score', comments change ~10 seconds
 //            String url = "https://technet.microsoft.com/en-us/security/rss/bulletin";  // FAIL: Items contain IDs that change
 //            String url = "http://www.f-secure.com/exclude/vdesc-xml/latest_50.rss";    // OK: HEAD Last-Modified
@@ -182,23 +187,26 @@ public class CollectorRssImpl extends CollectorHttp {
 //            String url = "https://blog.damballa.com/feed";                             // 403 Forbidden
 //            String url = "https://evilzone.org/.xml/?type=rss";                        // SSLHandshakeException
 //            String url = "http://rss.packetstormsecurity.com/files/";                  // OK: HEAD Last-Modified
-//            String url = "http://www.sophos.com/en-us/rss/threats/latest-viruses.xml";
+            String url = "http://www.sophos.com/en-us/rss/threats/latest-viruses.xml";
+            
+            String tabRegEx = "href=\"(http://www.sophos.com/\\S*[.]aspx)\">(Summary|More information)";
             
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);
-            configData.put("rss-subtype", "WEB");
+            configData.put(TAB_REGEX_KEY, tabRegEx);
+//            configData.put("rss-subtype", "WEB");
             CollectorHttp collector = new CollectorRssImpl(configData);
-            System.err.println("COLLECTION #1");
+//            System.err.println("COLLECTION #1");
             collector.collect();
             
-            Thread.sleep(2000);
-            System.err.println("\nCOLLECTION #2");
-            collector.collect();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+//            Thread.sleep(2000);
+//            System.err.println("\nCOLLECTION #2");
+//            collector.collect();
+//        }
+//        catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
     
 }
