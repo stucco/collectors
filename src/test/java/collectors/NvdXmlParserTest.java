@@ -6,6 +6,8 @@ import gov.pnnl.stucco.collectors.NVDXMLParser;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -37,6 +39,17 @@ public class NvdXmlParserTest extends TestCase
 
     public static void recordCheck(byte[] record) {
         recordCount++;
+    }
+    
+    public static void recordCheck2(byte[] record) {
+        try {
+            String rString = new String(record, "UTF-8");
+            System.out.println();
+            System.out.print(rString);
+            System.out.println();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } 
     }
     /**
      * Tests parsing 
@@ -215,7 +228,7 @@ public class NvdXmlParserTest extends TestCase
                 "</vuln:scanner>"+
                 "<vuln:summary>Multiple ethernet Network Interface Card (NIC) device drivers do not pad frames with null bytes, which allows remote attackers to obtain information from previous packets or kernel memory by using malformed packets, as demonstrated by Etherleak.</vuln:summary>"+
                 "</entry>"+
-                "<entry>"+
+                "<entry1>"+
                 "<vuln:vulnerable-configuration id=\"http://nvd.nist.gov/\">"+
                 "<cpe-lang:logical-test negate=\"false\" operator=\"OR\">"+
                 "<cpe-lang:fact-ref name=\"cpe:/a:microsoft:content_management_server:2001\"/>"+
@@ -272,7 +285,7 @@ public class NvdXmlParserTest extends TestCase
         {
             public void recordFound(NVDEvent e) {
                 byte[] src = e.getRecord();
-                recordCheck(src);
+                recordCheck2(src);
             }
         } );
 

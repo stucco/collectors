@@ -7,18 +7,26 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.io.StringWriter;
 
+import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.EndDocument;
 import javax.xml.stream.events.EndElement;
+import javax.xml.stream.events.StartDocument;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
+import javax.xml.stream.XMLStreamWriter;
+import javax.xml.stream.XMLOutputFactory;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,69 +80,85 @@ public class NVDXMLParser {
     public void parseForRecords(InputStream input) {
         
         // We need to walk each event to capture all the content within the record
-        StringWriter writer = new StringWriter();
-        StringWriter nvdWriter = new StringWriter();
         String recordID = "";
-        String nvdHeader = "";
-        boolean recording = false;
         
         // reset record count
         numRecordsParsed = 0;
         
         try {    
             // Setup a new eventReader
-            XMLEventReader eventReader = mfactory.createXMLEventReader(input);
+            XMLEventReader eventReader    = mfactory.createXMLEventReader(input);
+            StartElement rootStartElement = eventReader.nextTag().asStartElement();
+            XMLEventFactory eventFactory  = XMLEventFactory.newFactory();
+            StartDocument startDocument   = eventFactory.createStartDocument();
+            EndDocument endDocument       = eventFactory.createEndDocument();
             
-            // read the XML document
-            while (eventReader.hasNext()) {
-                XMLEvent event = eventReader.nextEvent();
-    
-                if (event.isStartElement()) {
-                    StartElement startElement = event.asStartElement();
-                    // If we have an record element, we create a new record (NOTE: this value is NVD specific)
-                    if (startElement.getName().getLocalPart() == ("entry")) {
-                        writer = new StringWriter();
-                        // We read the attributes from this tag and add the date
-                        // attribute to our object
-                        Iterator<Attribute> attributes = startElement.getAttributes();
-                        while (attributes.hasNext()) {
-                            Attribute attribute = attributes.next();
-                            if (attribute.getName().toString().equals("id")) {
-                                recordID = attribute.getValue().toString();
-                                // we are only recording if we can get an ID
-                                recording = true;
-                            }
+            XMLOutputFactory outputFactory = XMLOutputFactory.newFactory();
+            
+            // we cycle on the most outer loop as the repeating elements to capture
+            while(eventReader.hasNext() && !eventReader.peek().isEndDocument()) {
+                XMLEvent event = eventReader.nextTag();
+                if(!event.isStartElement()) {
+                    break;
+                }
+                
+                StartElement breakStartElement = event.asStartElement();
+                
+                // this structure is used if we need to descend into a record and grab only a portion of the structure
+                // as we would need to capture each "sub-event" within the structure
+                // In our case we won't need to do that, yet..."
+                List<XMLEvent> cachedXMLEvents = new ArrayList<XMLEvent>();
+                cachedXMLEvents.add(breakStartElement);
+                
+                // get the CVE ID
+                if (breakStartElement.getName().getLocalPart() == ("entry")) {
+                    // We read the attributes from this tag
+                    Iterator<Attribute> attributes = breakStartElement.getAttributes();
+                    while (attributes.hasNext()) {
+                        Attribute attribute = attributes.next();
+                        if (attribute.getName().toString().equals("id")) {
+                            recordID = attribute.getValue().toString();
                         }
                     }
-                    else if (startElement.getName().getLocalPart() == ("nvd")) {
-                        event.writeAsEncodedUnicode(nvdWriter);
-                        nvdHeader = new String(nvdWriter.toString());
-                    
-                    }
                 }
                 
-                // Capture all content with this record
-                if(recording) {
-                    event.writeAsEncodedUnicode(writer);
+                // Create a buffer for where to write the fragment
+                StringWriter stringWriter = new StringWriter();
+                
+                // A StAX XMLEventWriter will be used to write the XML fragment
+                XMLEventWriter eventWriter = outputFactory.createXMLEventWriter(stringWriter);
+                eventWriter.add(startDocument);
+                eventWriter.add(rootStartElement);
+                
+                // Write the XMLEvents that were cached while when we were
+                // checking the fragment for some "sub-structure" we wanted, in our case we should
+                // only have the startBreakElement
+                for(XMLEvent cachedEvent : cachedXMLEvents) {
+                    eventWriter.add(cachedEvent);
                 }
                 
-                // If we reach the end of an item element, capture the last element and fire event with record in tow
-                if (event.isEndElement()) {
-                    EndElement endElement = event.asEndElement();
-                    if (endElement.getName().getLocalPart() == ("entry") && recording) {
-                        logger.info("Identified NVD Record: " + recordID);
-                        numRecordsParsed++;
-                        recording = false;
-                        writer.flush();
-                        String record = new String(nvdHeader+"\n");
-                        record = record.concat(writer.toString());
-                        record = record.concat("\n</nvd>\n");
-                        fireEvent(record.getBytes("UTF-8"));
-                      
-                    }
+                // Write the XMLEvents that we still need to parse from this fragment
+                event = eventReader.nextEvent();
+                while(eventReader.hasNext() && !(event.isEndElement() && event.asEndElement().getName().equals(breakStartElement.getName()))) {
+                    eventWriter.add(event);
+                    event = eventReader.nextEvent();
                 }
+                eventWriter.add(event);
+                
+                // Complete the record
+                eventWriter.add(eventFactory.createEndElement(rootStartElement.getName(), null));
+                eventWriter.add(endDocument);
+                
+                // fire event to unload record
+                logger.info("Identified NVD Record: " + recordID);
+                numRecordsParsed++;
+                stringWriter.flush();
+                String record = new String(stringWriter.toString());
+                fireEvent(record.getBytes("UTF-8"));
+                
             }
         } catch (XMLStreamException e) {
+            // we skip this record if there is an error with this record
             logger.error("Hit exception processing XML stream: " + e.toString());
         } catch (UnsupportedEncodingException e) {
             logger.error("Unsupported Encoding: " + e.toString()); 
