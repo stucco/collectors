@@ -95,7 +95,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
                 eTag = "";
             }
             
-           // Get the content as a byte array, and compute its checksum
+            // Get the content as a byte array, and compute its checksum
             byte[] content = null;
             try (
                     BufferedInputStream in = new BufferedInputStream(connection.getInputStream());
@@ -204,7 +204,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);
-            CollectorWebPageImpl collector = new CollectorWebPageImpl(configData);
+            CollectorHttp collector = new CollectorWebPageImpl(configData);
 //            try {
 //                collector.obtainWebPage("https://isc.sans.edu/diary.html?storyid=18311&rss");
 //            }
