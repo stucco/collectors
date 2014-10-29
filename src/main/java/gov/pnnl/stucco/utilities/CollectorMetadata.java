@@ -18,9 +18,6 @@ import java.util.TreeMap;
  * Repository for metadata used to help collectors know whether content has been updated. 
  */
 public class CollectorMetadata {
-
-    /** Magic value indicating there is no value. */
-    public static final String NONE = "";
         
     private static final CollectorMetadata singleton;
     static {
@@ -38,76 +35,6 @@ public class CollectorMetadata {
     /** File for persisting the metadata. Each line is: URI\tTimestamp\tETag\tHashCode. */
     private File persistenceFile;
     
-    //TODO: Make separate class
-    /** Struct-like class holding the metadata for collection at one URI. */
-    private static class UriMetadata {
-        
-        /** Timestamp (never null). */
-        private Date timestamp = new Date(0);
-        
-        /** HTTP ETag (never null). */
-        private String eTag = NONE;
-        
-        /** Our internal checksum (never null). */
-        private String hash = NONE;
-        
-        /**
-         * Constructs an empty record. It will default to the start-of-epoch 
-         * Date and an empty hash. 
-         */
-        public UriMetadata() {
-        }
-        
-        public void setHash(String hash) {
-            if (hash == null) {
-                throw new NullPointerException();
-            }
-            
-            this.hash = hash;
-        }
-        
-        public String getHash() {
-            return hash;
-        }
-
-        public Date getTimestamp() {
-            return timestamp;
-        }
-        
-        public void setTimestamp(Date timestamp) {
-            if (timestamp == null) {
-                throw new NullPointerException();
-            }
-            
-            this.timestamp = timestamp;
-        }
-
-        public String getETag() {
-            return eTag;
-        }
-
-        public void setETag(String eTag) {
-            if (eTag == null) {
-                throw new NullPointerException();
-            }
-            
-            this.eTag = eTag;
-        }
-
-        public String toString() {
-            return toPersist();
-        }
-        
-        /** 
-         * Converts to human-readable format used for persisting the data. 
-         * 
-         * <p>Using this instead of toString() makes calls to it easier to find.
-         */
-        public String toPersist() {
-            String httpTimestamp = TimestampConvert.dateToRfc1123(timestamp);
-            return String.format("%s\t%s\t%s", httpTimestamp, eTag, hash);
-        }
-    }
     
     
     public static CollectorMetadata getInstance() {
@@ -143,6 +70,20 @@ public class CollectorMetadata {
         }
         
         return metadata;
+    }
+    
+    /** Sets the UUID for a URI. */
+    public void setUuid(String uri, String uuid) {
+        UriMetadata metadata = getOrCreateMetadata(uri);
+        metadata.setUuid(uuid);
+    }
+    
+    /** Gets the UUID for a URI. */
+    public String getUuid(String uri) {
+        UriMetadata metadata = getOrCreateMetadata(uri);
+        String uuid = metadata.getUuid();
+        
+        return uuid;
     }
     
     /** Sets the timestamp for a URI. */ 
@@ -212,7 +153,7 @@ public class CollectorMetadata {
     
     /** Computes our internal hash for byte content. */
     public static String computeHash(byte[] content) {
-        String checksum = NONE;
+        String checksum = UriMetadata.NONE;
         try {
             checksum = FileChecksum.compute("SHA-1", content);
         }
@@ -276,19 +217,18 @@ public class CollectorMetadata {
                 
                 // Split it on tabs
                 String[] token = line.split("\t", -1);
-//                if (token.length != 4) {
-//                    throw new IOException("Invalid line: " + line);
-//                }
                 
                 // Get the tokens
                 String key = token[0].toLowerCase();
                 String httpTimestamp = token[1];
-                String eTag = (token.length > 2)?  token[2] : CollectorMetadata.NONE;
-                String hash = (token.length > 3)?  token[3].toLowerCase() : CollectorMetadata.NONE;
+                String eTag = (token.length > 2)?  token[2] : UriMetadata.NONE;
+                String hash = (token.length > 3)?  token[3].toLowerCase() : UriMetadata.NONE;
+                String uuid = (token.length > 4)?  token[4].toLowerCase() : UriMetadata.NONE;
                 
                 UriMetadata value = new UriMetadata();
                 value.setETag(eTag);
                 value.setHash(hash);
+                value.setUuid(uuid);
                 
                 try {
                     // Convert timestamp to date

@@ -49,7 +49,6 @@ public class CollectorWebPageImpl extends CollectorHttp {
         try {
             if (needToGet(sourceUri)) {
                 if (obtainWebPage(sourceUri)) {
-                    assignDocId();
                     storeDocument();                    
                     send();
                 }
@@ -147,6 +146,11 @@ public class CollectorWebPageImpl extends CollectorHttp {
         
         // Update the SHA-1 checksum and see if it changed
         boolean isNewContent = pageMetadata.setHash(url, checksum);
+        
+        if (isNewContent) {
+            assignDocId();
+            pageMetadata.setUuid(url, docId);
+        }
         return isNewContent;
     }
 

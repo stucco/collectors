@@ -1,6 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
 import gov.pnnl.stucco.utilities.CollectorMetadata;
+import gov.pnnl.stucco.utilities.UriMetadata;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -117,7 +118,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
 
         // ETag
         String lastETag = pageMetadata.getETag(uri);
-        if (!lastETag.equals(CollectorMetadata.NONE)) {
+        if (!lastETag.equals(UriMetadata.NONE)) {
             connection.setRequestProperty("If-None-Match", lastETag);
         }
 
@@ -164,7 +165,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                     // Check hash
                     String lastETag = pageMetadata.getETag(uri);
                     String eTag = connection.getHeaderField("ETag");
-                    if (eTag != null  &&  !lastETag.equals(CollectorMetadata.NONE)  &&  eTag.equals(lastETag)) {
+                    if (eTag != null  &&  !lastETag.equals(UriMetadata.NONE)  &&  eTag.equals(lastETag)) {
                         // Page is unmodified
                         responseCode = HttpURLConnection.HTTP_NOT_MODIFIED;
     
@@ -322,15 +323,21 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
             // The Stucco message will be handled by this entry collector instead of the tab collector
             tabCollector.setMessaging(false);
             
-            // Collect the tab
+            // Try to collect the tab
             tabCollector.collect();
             
-            // Add ID and URL to the entry message
-            String tabDocId = tabCollector.getDocId();
-            messageBuffer.append(tabDocId);
-            messageBuffer.append(" ");
-            messageBuffer.append(url);
-            messageBuffer.append("\n");
+            String tabDocId = pageMetadata.getUuid(url);
+            if (tabDocId != UriMetadata.NONE) {
+                // We have a record of this tab, meaning we just collected it or
+                // we already had it. Either way we add it to the message.
+                //
+                // NOTE: For now, this is all we're checking. The software will
+                // eventually need more robust exception handling.
+                messageBuffer.append(tabDocId);
+                messageBuffer.append(" ");
+                messageBuffer.append(url);
+                messageBuffer.append("\n");
+            }
         }
         
         // Send the Stucco message

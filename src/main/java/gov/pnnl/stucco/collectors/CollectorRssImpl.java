@@ -1,6 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
 import gov.pnnl.stucco.utilities.CollectorMetadata;
+import gov.pnnl.stucco.utilities.UriMetadata;
 
 import java.io.File;
 import java.io.IOException;
@@ -115,7 +116,7 @@ public class CollectorRssImpl extends CollectorHttp {
         // Copy each URL
         for (SyndEntryImpl entry : entries) {
             String url = entry.getLink().toLowerCase();            
-            if (checksumAll || pageMetadata.getHash(url) != CollectorMetadata.NONE) {
+            if (checksumAll || pageMetadata.getHash(url) != UriMetadata.NONE) {
                 urlList.add(url);
             };
         }
