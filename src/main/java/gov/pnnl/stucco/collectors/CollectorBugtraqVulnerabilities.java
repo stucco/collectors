@@ -56,6 +56,11 @@ public class CollectorBugtraqVulnerabilities extends CollectorHttp {
         // The format for the listing URL
         final String urlFormat = "http://www.securityfocus.com/cgi-bin/index.cgi?op=display_list&c=12&o=%d&l=%d";
         
+        if (!collectorConfigData.containsKey(CRAWL_DELAY_KEY)) {
+            // No crawl delay specified; set a default
+            collectorConfigData.put(CRAWL_DELAY_KEY, "2");
+        }
+
         // For each listing page requested (possibly only one)
         for (int page = 1; page <= maxListingPages; page++) {
             // Generate URL

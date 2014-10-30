@@ -33,6 +33,9 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     /** Configuration data key for a regex for finding tabbed subpages. */
     protected static final String TAB_REGEX_KEY = "tab-regex";
     
+    /** Configuration data key for robots.txt Crawl-delay. */
+    protected static final String CRAWL_DELAY_KEY = "crawl-delay";
+    
     protected static final Logger logger = LoggerFactory.getLogger(CollectorHttp.class);
     
     /** Number of milliseconds to allow for making a connection. */
@@ -104,30 +107,62 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
      */
     protected HttpURLConnection makeConditionalRequest(String httpRequestMethod, String uri)
             throws IOException {
+        
+        pauseCrawlDelay();
+        
         // Set up request
         URL url = new URL(uri);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(httpRequestMethod);
         connection.setReadTimeout(TIMEOUT);
-
+        
         // Add metadata hints (which may get ignored):
-
+        
         // Timestamp
         long lastTime = pageMetadata.getTimestamp(uri).getTime();
         connection.setIfModifiedSince(lastTime);
-
+        
         // ETag
         String lastETag = pageMetadata.getETag(uri);
         if (!lastETag.equals(UriMetadata.NONE)) {
             connection.setRequestProperty("If-None-Match", lastETag);
         }
-
-
+        
+        
         // Make request
         logger.info("{} - {}", uri, httpRequestMethod);
         connection.connect();
-
+        
         return connection;
+    }
+    
+    /** 
+     * Pauses the thread for the number of seconds specified in the Crawl-delay.
+     */
+    private void pauseCrawlDelay() {
+        try {
+            // Default pause of 1 second
+            long pauseMillis = 1000;
+            
+            // Look value up in config
+            String crawlDelayStr = collectorConfigData.get(CRAWL_DELAY_KEY);
+            if (crawlDelayStr != null) {
+                try {
+                    // Found it, so parse the number of seconds
+                    float crawlDelay = Float.parseFloat(crawlDelayStr);
+                    pauseMillis = Math.round(crawlDelay * 1000);
+                }
+                catch (NumberFormatException nfe) {
+                    // Didn't parse correctly, so just use default
+                }
+            }
+            
+            // Pause
+            Thread.sleep(pauseMillis);
+        } 
+        catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /** 
