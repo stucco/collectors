@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+	<!-- <<<=== USER CONFIGURABLE PROPERTIES ===>>> -->
+
+	<!-- ===>>> GENERAL <<<=== -->
+	<property name="LOG_PATTERN"
+		value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{48} - %msg%n" />
+
+	<!-- ===>>> CONSOLE <<<=== -->
+	<property name="STDOUT_LOG_LEVEL" value="ERROR" />
+
+	<!-- ===>>> FILES <<<=== -->
+	<property name="LOG_NAME" value="stucco-scheduler-test" />
+	<property name="LOG_LEVEL" value="DEBUG" />
+
+	<!-- ===> LOGSTASH <<<=== -->
+	<property name="LOGSTASH_NAME" value="logstash" />
+	<property name="LOGSTASH_LEVEL" value="INFO" />
+
+	<!-- <<<== END USER CONFIGURABLE PROPERTIES ==>>> -->
+
+
+	<appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>${STDOUT_LOG_LEVEL}</level>
+		</filter>
+		<encoder>
+			<pattern>${LOG_PATTERN}</pattern>
+		</encoder>
+	</appender>
+
+	<!-- This log file is redundant if logstash is working -->
+	<appender name="file"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>${LOG_LEVEL}</level>
+		</filter>
+		<file>${LOG_NAME}.log</file>
+		<encoder>
+			<pattern>${LOG_PATTERN}</pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_NAME}.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>5</maxHistory>
+		</rollingPolicy>
+	</appender>
+
+	<!-- Logs only errors in a separate file -->
+	<appender name="errfile"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>ERROR</level>
+		</filter>
+		<file>${LOG_NAME}-errors.log</file>
+		<encoder>
+			<pattern>${LOG_PATTERN}</pattern>
+		</encoder>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_NAME}-errors.%d{yyyy-MM-dd}.log</fileNamePattern>
+			<maxHistory>10</maxHistory>
+		</rollingPolicy>
+	</appender>
+
+	<appender name="logstash"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>${LOGSTASH_LEVEL}</level>
+		</filter>
+		<file>${LOGSTASH_NAME}.log</file>
+		<encoder class="net.logstash.logback.encoder.LogstashEncoder" />
+		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
+			<fileNamePattern>${LOGSTASH_NAME}.%i.log.zip</fileNamePattern>
+			<minIndex>1</minIndex>
+			<maxIndex>3</maxIndex>
+		</rollingPolicy>
+		<triggeringPolicy
+			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
+			<maxFileSize>5MB</maxFileSize>
+		</triggeringPolicy>
+	</appender>
+
+	<root level="all">
+		<appender-ref ref="stdout" />
+		<appender-ref ref="file" />
+		<appender-ref ref="errfile" />
+		<appender-ref ref="logstash" />
+	</root>
+
+</configuration>
