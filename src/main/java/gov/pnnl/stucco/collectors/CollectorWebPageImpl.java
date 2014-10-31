@@ -36,11 +36,11 @@ public class CollectorWebPageImpl extends CollectorHttp {
         super(configData);
     }
     
-    final public void setStoring(boolean flag) {
+    public final void setStoring(boolean flag) {
         storing = flag;
     }
     
-    final public void setMessaging(boolean flag) {
+    public final void setMessaging(boolean flag) {
         messaging = flag;
     }
     
@@ -72,7 +72,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
      *
      * @return Whether we got new content
      */
-    protected boolean obtainWebPage(String uri) throws IOException
+    protected final boolean obtainWebPage(String uri) throws IOException
     {
         HttpURLConnection connection = makeConditionalRequest("GET", uri);
         int responseCode = getEnhancedResponseCode(connection);
@@ -164,7 +164,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
      * 
      * @throws DocServiceException
      */
-    protected void storeDocument() throws DocServiceException {
+    protected final void storeDocument() throws DocServiceException {
         if (storing) {
             // Send to document store
             String contentType = messageMetadata.get("contentType");
@@ -175,7 +175,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
     
     // Overridden to separate ID generation, document storage, and messaging
     @Override
-    public void send() {
+    public final void send() {
         if (messaging) {
             messageContent = docId.getBytes();
             messageSender.sendIdMessage(messageMetadata, messageContent);

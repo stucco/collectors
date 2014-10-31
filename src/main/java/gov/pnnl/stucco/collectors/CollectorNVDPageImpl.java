@@ -5,18 +5,13 @@ package gov.pnnl.stucco.collectors;
  */
 
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
-import gov.pnnl.stucco.doc_service_client.DocumentObject;
-import gov.pnnl.stucco.utilities.CollectorMetadata;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Date;
@@ -24,14 +19,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 
-public class CollectorNVDPageImpl extends CollectorHttp {    
+public class CollectorNVDPageImpl extends CollectorWebPageImpl {    
     
-    /** Whether we will save the collected content to the document store. */
-    protected boolean storing = true;
-    
-    /** Whether we will send a message for the collected content. */
-    protected boolean messaging = true;
-
     /** 
      * constructor for obtaining the contents of a NVD webpage (consisting of multiple CVE records)
      * @param URI - where to get the contents on the web
@@ -39,14 +28,6 @@ public class CollectorNVDPageImpl extends CollectorHttp {
      */
     public CollectorNVDPageImpl(Map<String, String> configData) {
         super(configData);
-    }
-    
-    final public void setStoring(boolean flag) {
-        storing = flag;
-    }
-    
-    final public void setMessaging(boolean flag) {
-        messaging = flag;
     }
     
     @Override
@@ -120,94 +101,7 @@ public class CollectorNVDPageImpl extends CollectorHttp {
             logger.error("Cannot send data", e);
         }
     }
-    
-    
-    //  TODO: ISSUES TO DEAL WITH:  
-    //       Authentication: Username, PW
-    //       Cookies
-    //       Encoding issues
-    /**
-     * Retrieves the webpage.
-     *
-     * @return Whether we got new content
-     */
-    protected boolean obtainWebPage(String uri) throws IOException
-    {
-        HttpURLConnection connection = makeConditionalRequest("GET", uri);
-        int responseCode = getEnhancedResponseCode(connection);
-        boolean isNewContent = (responseCode == HttpURLConnection.HTTP_OK);
         
-        if (isNewContent) {
-            // So far it seems new
-            
-            messageMetadata.put("contentType", connection.getHeaderField("Content-Type"));
-            
-            // Get the Last-Modified timestamp
-            long now = System.currentTimeMillis();
-            long time = connection.getHeaderFieldDate("Last-Modified", now);
-            timestamp = new Date(time);
-        
-            // Get the ETag
-            String eTag = connection.getHeaderField("ETag");
-            if (eTag == null) {
-                eTag = "";
-            }
-            
-           // Get the content as a byte array, and compute its checksum
-            byte[] content = null;
-            try (
-                    BufferedInputStream in = new BufferedInputStream(connection.getInputStream());
-                    ByteArrayOutputStream out = new ByteArrayOutputStream()
-            ) {
-                // Get a chunk at a time 
-                byte[] buffer = new byte[8192]; // 8K
-                int bytesRead;
-                while ((bytesRead = in.read(buffer)) > 0) {
-                    out.write(buffer, 0, bytesRead);
-                }
-
-                content = out.toByteArray();
-            }
-            String checksum = CollectorMetadata.computeHash(content);
-        
-            
-            // Update the metadata
-            isNewContent = updatePageMetadata(uri, timestamp, eTag, checksum);
-            String endUri = connection.getURL().toExternalForm();
-            if (!uri.equalsIgnoreCase(endUri)) {
-                // We got redirected, so save metadata for the end URL too
-                updatePageMetadata(endUri, timestamp, eTag, checksum);
-            }
-            pageMetadata.save();
-            
-            if (isNewContent) {
-                // Save the new content
-                rawContent = content;
-            }
-            else {
-                // Content isn't new
-                logger.info("{} - SHA-1 unchanged", endUri);
-                rawContent = null;
-            }
-            rawContent = isNewContent?  content : null;            
-        }
-        
-        return isNewContent;
-    }
-
-    /** Updates the metadata for a URL after a successful GET. */
-    private boolean updatePageMetadata(String url, Date timestamp, String eTag, String checksum) {
-        // Timestamp
-        pageMetadata.setTimestamp(url, timestamp);
-
-        // ETag
-        pageMetadata.setETag(url, eTag);
-        
-        // Update the SHA-1 checksum and see if it changed
-        boolean isNewContent = pageMetadata.setHash(url, checksum);
-        return isNewContent;
-    }
-    
     /**
      * obtain the contents from file
      * @param filename
@@ -244,34 +138,6 @@ public class CollectorNVDPageImpl extends CollectorHttp {
         return content;
     }
 
-    @Override
-    public void clean() {
-        rawContent = null;
-    }
-    
-    /**
-     * Stores the collected document to the document store.
-     * 
-     * @throws DocServiceException
-     */
-    protected void storeDocument() throws DocServiceException {
-        if (storing) {
-            // Send to document store
-            String contentType = messageMetadata.get("contentType");
-            DocumentObject doc = new DocumentObject(rawContent, contentType);
-            docServiceClient.store(doc, docId);
-        }
-    }
-    
-    // Overridden to separate ID generation, document storage, and messaging
-    @Override
-    public void send() {
-        if (messaging) {
-            messageContent = docId.getBytes();
-            messageSender.sendIdMessage(messageMetadata, messageContent);
-        }
-    }
-    
     /** Test driver used during development. */
     static public void main(String[] args) {
         try {                

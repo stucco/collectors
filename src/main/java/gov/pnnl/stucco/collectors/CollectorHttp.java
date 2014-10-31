@@ -235,7 +235,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
      * Performs a header-based pre-retrieval check on a URI to see if we need 
      * to get its content. 
      */
-    protected boolean needToGet(String uri) throws IOException {
+    protected final boolean needToGet(String uri) throws IOException {
         HttpURLConnection connection = makeConditionalRequest("HEAD", uri);
         int responseCode = getEnhancedResponseCode(connection);
         
