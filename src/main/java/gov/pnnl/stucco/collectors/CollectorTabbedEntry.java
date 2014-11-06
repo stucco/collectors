@@ -19,7 +19,9 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
     @Override
     public void collect() {
         try {
-            if (needToGet(sourceUri)) {
+            boolean getEverything = isForcedCollection();
+            
+            if (getEverything || needToGet(sourceUri)) {
                 if (obtainWebPage(sourceUri)) {
                     
                     // Scrape the tab URLs from the listing
@@ -50,6 +52,9 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
         Map<String, String> configData = new HashMap<String, String>();
         configData.put(SOURCE_URI, url);
         configData.put(TAB_REGEX_KEY, tabRegEx);
+        
+        configData.put(NOW_COLLECT_KEY, "all");
+        
 
         // Run the test collection
         CollectorTabbedEntry collector = new CollectorTabbedEntry(configData);

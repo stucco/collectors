@@ -1,5 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
+import gov.pnnl.stucco.utilities.FeedCollectionStatus;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -20,32 +22,9 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
     /** Limit on the number of entries to process. */
     private int maxEntries = Integer.MAX_VALUE;
 
-    /** 
-     * Option to stop collection if we encounter an entry that has already
-     * been collected (according to our collection metadata database).
-     */ 
-    private boolean stopOnRepeatEntry = true;
-
     /** Number of entries processed. */
     private int entryCount = 0;
         
-    /** Enum for returning status of entries collection. */ 
-    private static enum EntriesCollectionStatus  {
-        /** OK to continue. */
-        GO,
-        
-        // Various stop conditions
-        
-        /** Stop because scraping found no entries. */
-        STOP_EMPTY,
-        
-        /** Stop because we hit our max limit. */
-        STOP_MAXED,
-        
-        /** Stop because we found a repeat. */
-        STOP_REPEAT
-    }
-    
     
     public CollectorPseudoRss(Map<String, String> configData) {
         super(configData);
@@ -55,25 +34,30 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
         maxEntries = n;
     }
     
-    public void setStopOnRepeatEntry(boolean flag) {
-        stopOnRepeatEntry = flag;
-    }
-    
     @Override
     public void collect() {
         try {
+            // See if we want everything, otherwise we want new content only
+            boolean getEverything = isForcedCollection();
+            
             String pageUrl = sourceUri;
             while (pageUrl != null) {
                 String nextPageUrl = null;
                 
-                if (needToGet(pageUrl)) {
+                if (getEverything || needToGet(pageUrl)) {
+                    // The page is at least potentially something we want, 
+                    // so attempt to GET it
                     if (obtainWebPage(pageUrl)) {
-                        if (collectEntriesFromPage(pageUrl) == EntriesCollectionStatus.GO) {;
+                        // We got what we wanted, so process it
+                        collectEntriesFromPage(pageUrl);
+                        
+                        FeedCollectionStatus status = getCollectionStatus();
+                        if (status == FeedCollectionStatus.GO) {
+                            // OK so far; check for next page
                             nextPageUrl = getNextPageUrl();
                         }
                     }
                 }
-
                 pageUrl = nextPageUrl;
             }
         }
@@ -88,36 +72,37 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
     /**
      * Collects a listing page and its entries.
      * 
-     * @param pageUrl  Current listing page's URL
+     * <p> Sets feed collection status if a stop condition is detected.
      * 
-     * @return Status of collecting entries.
+     * @param pageUrl  Current listing page's URL
      */
-    private EntriesCollectionStatus collectEntriesFromPage(String pageUrl) {
+    private void collectEntriesFromPage(String pageUrl) {
         // Get the regex for finding entry URLs
         String entryRegEx = collectorConfigData.get(ENTRY_REGEX_KEY);
         if (entryRegEx == null) {
-            return null;
+            // There was no regex, so we can't collect
+            setCollectionStatus(FeedCollectionStatus.STOP_INVALID);
+            return;
         }
         
         // Scrape the entry URLs from the listing
         List<String> entryList = scrapeUrls(entryRegEx);
         
         // Collect the entries
-        EntriesCollectionStatus status = collectEntries(entryList);
-        
-        return status;
+        collectEntries(entryList);
     }
     
     
     /** 
-     * Collects the entries from one listing page. 
+     * Collects the entries from one listing page.
      * 
-     * @return Status of collecting entries.
+     * <p> Sets feed collection status if a stop condition is detected.
      */
-    private EntriesCollectionStatus collectEntries(List<String> entryUrls) {
-        // Stop if we scraped no entries
+    private void collectEntries(List<String> entryUrls) {
         if (entryUrls.isEmpty()) {
-            return EntriesCollectionStatus.STOP_EMPTY;
+            // We got no entries, so it's probably pointless to try additional pages
+            setCollectionStatus(FeedCollectionStatus.STOP_EMPTY);
+            return;
         }
         
         // Limit the list to the remainder of our quota
@@ -126,17 +111,16 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
         int entriesToCollect = Math.min(entriesAllowed, entriesAvailable);
         entryUrls = entryUrls.subList(0, entriesToCollect);
         
+        boolean checkForDuplicates = !isForcedCollection();
+        
         // Loop through entries
         for (String entryUrl : entryUrls) {
             entryCount++;
 
-            if (stopOnRepeatEntry) {
-                // This option is on...
-                
-                //...so stop if we already collected this URL
-                if (pageMetadata.contains(entryUrl)) {
-                    return EntriesCollectionStatus.STOP_REPEAT;
-                }
+            if (checkForDuplicates  &&  pageMetadata.contains(entryUrl)) {
+                // We were looking for only new entries, but found an old one
+                setCollectionStatus(FeedCollectionStatus.STOP_DUPLICATE);
+                return;
             }
             
             // Collect the URL
@@ -144,12 +128,9 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
             entryCollector.collect();
         }
         
-        if (entryCount < maxEntries) {
-            return EntriesCollectionStatus.GO;
-        }
-        else {
-            // Stop if we reached our limit
-            return EntriesCollectionStatus.STOP_MAXED;
+        if (entryCount >= maxEntries) {
+            // We reached our limit on how much to collect
+            setCollectionStatus(FeedCollectionStatus.STOP_MAXED);
         }
     }
 
@@ -188,9 +169,10 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
         collectorConfigData.put(TAB_REGEX_KEY, tabRegEx);
         collectorConfigData.put(NEXT_PAGE_REGEX_KEY, nextPageRegEx);
         
+        collectorConfigData.put(NOW_COLLECT_KEY, "all");
+        
         CollectorPseudoRss collector = new CollectorPseudoRss(collectorConfigData);
-        collector.setMaxEntries(1);
-        collector.setStopOnRepeatEntry(false);
+        collector.setMaxEntries(5);
         collector.collect();
     }
 }
