@@ -151,18 +151,16 @@ public class CollectorRssImpl extends CollectorHttp {
             
             // Start fresh each time since the map could have been altered
             entryConfig.clear();
+            entryConfig.putAll(collectorConfigData);
             
             // Set the configuration info needed by the collector
             entryConfig.put("source-URI", link);
-            entryConfig.put("source-name", sourceName);
             entryConfig.put("content-type", "text/html");
-            entryConfig.put("data-type", messageMetadata.get("dataType"));
             if (tabRegEx == null) {
                 entryConfig.put("type", "WEB");
             }
             else {
                 entryConfig.put("type", "TABBED_ENTRY");
-                entryConfig.put(TAB_REGEX_KEY, tabRegEx);
             }
             
             // Use the appropriate collector
@@ -194,9 +192,16 @@ public class CollectorRssImpl extends CollectorHttp {
             
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
+            configData.put("type", "RSS");
+            configData.put("data-type", "structured");
+            configData.put("source-name:", "sophos");
             configData.put("source-URI", url);
-            configData.put(TAB_REGEX_KEY, tabRegEx);
-//            configData.put("rss-subtype", "WEB");
+            configData.put("tab-regex", tabRegEx);
+            configData.put("content-type", "text/xml");
+            configData.put("store-entry", "true");
+            configData.put("now-collect", "new");
+            configData.put("cron", "0 10 * * * ?");
+                    
             CollectorHttp collector = new CollectorRssImpl(configData);
 //            System.err.println("COLLECTION #1");
             collector.collect();

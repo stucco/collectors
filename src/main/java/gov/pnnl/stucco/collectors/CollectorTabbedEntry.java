@@ -1,5 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
+import gov.pnnl.stucco.doc_service_client.DocServiceException;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
@@ -12,6 +14,9 @@ import java.util.Map;
  */
 public class CollectorTabbedEntry extends CollectorWebPageImpl {
 
+    /** Configuration key for whether to store the entry page as a document. */
+    public static final String STORE_ENTRY_KEY = "store-entry";
+
     public CollectorTabbedEntry(Map<String, String> configData) {
         super(configData);
     }
@@ -21,6 +26,14 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
         try {
             if (needToGet(sourceUri)) {
                 if (obtainWebPage(sourceUri)) {
+                    String storeEntryStr = collectorConfigData.get(STORE_ENTRY_KEY);
+                    boolean storeEntry = false;
+                    if (storeEntryStr != null) {
+                        storeEntry = Boolean.valueOf(storeEntryStr);
+                    }
+                    if (storeEntry) {
+                        storeDocument();
+                    }
                     
                     // Scrape the tab URLs from the listing
                     String tabRegEx = collectorConfigData.get(TAB_REGEX_KEY);
@@ -35,7 +48,9 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
         catch (IOException e) {
             logger.error("Exception raised while reading web page", e);
         }
-        
+        catch (DocServiceException e) {
+            logger.error("Cannot send data", e);
+        }
     }
 
     public static void main(String[] args) {
