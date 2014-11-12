@@ -9,6 +9,11 @@ import java.io.IOException;
 
 import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
+import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.CompressorInputStream;
+import org.apache.commons.compress.compressors.CompressorStreamFactory;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 
 
@@ -31,6 +36,51 @@ public class UnpackUtils {
         }
         
         return untarred;    
+    }
+    
+    /** Unpackages single file content, uses various techniques to uncompress it */
+    public static byte[] unCompress(byte[] content) throws IOException {
+        try (
+                ByteArrayInputStream compressedIn = new ByteArrayInputStream(content);
+                CompressorInputStream compressedInStream = new CompressorStreamFactory().createCompressorInputStream(compressedIn);
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                ) {
+            final byte[] buffer = new byte[8192];
+            int n;
+            while ((n = compressedInStream.read(buffer)) != -1) {
+                out.write(buffer, 0, n);
+            }
+
+            byte[] uncompressed = out.toByteArray();
+            return uncompressed;
+        } catch (CompressorException e) {
+//            System.out.println("General gunzip approach failed trying unzip");
+//            e.printStackTrace();
+        }
+        // try unzip approach, given the other ones failed
+        return unZip(content);
+        
+    }
+
+    /** uncompresses a single file content that had zip applied */
+    private static byte[] unZip(byte[] content) throws IOException {
+        // this code only works if we throw an exception above, meaning we can't uncompress with the generalized approach
+        try (
+                ByteArrayInputStream compressedIn = new ByteArrayInputStream(content);
+                ZipArchiveInputStream zipArcInStream = new ZipArchiveInputStream(compressedIn);
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                ) {
+            ZipArchiveEntry entry = zipArcInStream.getNextZipEntry();
+            long entrySize = entry.getSize();
+            final byte[] buffer = new byte[8192];
+            int n;
+            while ((n = zipArcInStream.read(buffer,0, 8192 )) != -1) {
+                out.write(buffer, 0, n);
+            }
+
+            byte[] uncompressed = out.toByteArray();
+            return uncompressed;
+        }
     }
 
     /** Unpackages single file content that has been had gzip applied. */
@@ -122,6 +172,11 @@ public class UnpackUtils {
     
     public static void main(String[] args) throws Exception {
         byte[] raw, processed;
+        {
+            File file = new File("test_config.yml.zip");
+            raw = readFile(file);
+            processed = unCompress(raw);
+        }
 //        {
 //            File file = new File("test_config.yml.tar.gz");
 //            raw = readFile(file);
@@ -132,11 +187,11 @@ public class UnpackUtils {
 //            raw = readFile(file);
 //            processed = unGzip(raw);
 //        }
-        {
-            File file = new File("test_config.yml.tar");
-            raw = readFile(file);
-            processed = unTar(raw);
-        }
+//        {
+//            File file = new File("test_config.yml.tar");
+//            raw = readFile(file);
+//            processed = unTar(raw);
+//        }
         
         System.err.println(new String(processed));
         return;

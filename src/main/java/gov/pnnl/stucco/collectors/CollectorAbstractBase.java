@@ -100,7 +100,7 @@ public abstract class CollectorAbstractBase implements Collector {
         
         switch (directive) {
             case "unzip":
-                result = UnpackUtils.unGzip(content);
+                result = UnpackUtils.unCompress(content);
                 break;
                 
             case "tar-unzip":

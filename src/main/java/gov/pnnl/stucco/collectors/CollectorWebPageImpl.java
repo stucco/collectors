@@ -207,7 +207,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
 //            String url = "https://isc.sans.edu/feeds/daily_sources";                                // OK: HEAD Last-Modified
             
 //            String url = "http://espn.go.com";  // FAIL: Timestamp and IDs changed
-            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPv6.csv.gz";  // OK: HEAD conditional
+            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
 
             
             Config.setConfigFile(new File("../config/stucco.yml"));
