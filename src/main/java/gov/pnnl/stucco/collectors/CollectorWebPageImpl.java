@@ -207,13 +207,14 @@ public class CollectorWebPageImpl extends CollectorHttp {
 //            String url = "https://isc.sans.edu/feeds/daily_sources";                                // OK: HEAD Last-Modified
             
 //            String url = "http://espn.go.com";  // FAIL: Timestamp and IDs changed
-            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
+//            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
+            String url = "http://www.malwaredomainlist.com/mdl.php?inactive=&sort=Date&search=&colsearch=All&ascordesc=DESC&quantity=10000&page=0";
 
             
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);
-            configData.put("post-process", "unzip");
+//            configData.put("post-process", "unzip");
             CollectorHttp collector = new CollectorWebPageImpl(configData);
 
             System.err.println("COLLECTION #1");
@@ -221,7 +222,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
             
             Thread.sleep(2000);
             System.err.println("\nCOLLECTION #2");
-            collector.collect();
+//            collector.collect();
         }
         catch (InterruptedException e) {
             e.printStackTrace();

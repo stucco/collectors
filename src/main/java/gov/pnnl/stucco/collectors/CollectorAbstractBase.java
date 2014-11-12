@@ -97,19 +97,22 @@ public abstract class CollectorAbstractBase implements Collector {
      */
     public byte[] postProcess(String directive, byte[] content) throws IOException {
         byte[] result;
-        
-        switch (directive) {
-            case "unzip":
-                result = UnpackUtils.unCompress(content);
-                break;
+        if (directive != null) {
+            switch (directive) {
+                case "unzip":
+                    result = UnpackUtils.unCompress(content);
+                    break;
+                    
+                case "tar-unzip":
+                    result = UnpackUtils.unTarGzip(content);
+                    break;
                 
-            case "tar-unzip":
-                result = UnpackUtils.unTarGzip(content);
-                break;
-            
-            default:
-                result = content;
-                break;
+                default:
+                    result = content;
+                    break;
+            }
+        } else {
+            result = content;
         }
         
         return result;
