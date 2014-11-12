@@ -1,10 +1,12 @@
 package gov.pnnl.stucco.collectors;
 
+import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import gov.pnnl.stucco.doc_service_client.*;
+import gov.pnnl.stucco.utilities.UnpackUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +18,10 @@ import org.slf4j.LoggerFactory;
 /** Abstract base class used in implementing Collectors. */
 public abstract class CollectorAbstractBase implements Collector {
     private static final Logger logger = LoggerFactory.getLogger(CollectorAbstractBase.class);
+    
+    /** Configuration key for what post-processing to perform on the byte contents. */
+    public static final String POSTPROCESS_KEY = "post-process";
+    
     
     /** Metadata for inclusion in the RabbitMQ header. */
     protected final Map<String, String> messageMetadata = new HashMap<String, String>();
@@ -82,5 +88,30 @@ public abstract class CollectorAbstractBase implements Collector {
     
     @Override
     public void clean() {   
+    }
+    
+    /** 
+     * Transforms the content with some post-processing, currently untar and/or unzip. 
+     * 
+     * @throws IOException
+     */
+    public byte[] postProcess(String directive, byte[] content) throws IOException {
+        byte[] result;
+        
+        switch (directive) {
+            case "unzip":
+                result = UnpackUtils.unCompress(content);
+                break;
+                
+            case "tar-unzip":
+                result = UnpackUtils.unTarGzip(content);
+                break;
+            
+            default:
+                result = content;
+                break;
+        }
+        
+        return result;
     }
 }
