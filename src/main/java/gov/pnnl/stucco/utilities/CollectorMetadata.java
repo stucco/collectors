@@ -30,7 +30,7 @@ public class CollectorMetadata {
     }
 
     /** Map of lowercased Uri Strings to UriCollectionRecords. */
-    private SortedMap<String, UriMetadata> collectionMap = new TreeMap<String, UriMetadata>();
+    private final SortedMap<String, UriMetadata> collectionMap = new TreeMap<String, UriMetadata>();
     
     /** File for persisting the metadata. Each line is: URI\tTimestamp\tETag\tHashCode. */
     private File persistenceFile;
@@ -55,21 +55,25 @@ public class CollectorMetadata {
     
     /** Gets whether there's metadata for a given URI. */
     public boolean contains(String uri) {
-        return collectionMap.containsKey(uri);
+        synchronized (collectionMap) {
+            return collectionMap.containsKey(uri);
+        }
     }
     
     /** Gets metadata for a URI, creating a new object if necessary. */
     private UriMetadata getOrCreateMetadata(String uri) {
-        // Normalize
-        uri = uri.toLowerCase();
-        
-        UriMetadata metadata = collectionMap.get(uri);
-        if (metadata == null) {
-            metadata = new UriMetadata();
-            collectionMap.put(uri, metadata);
+        synchronized (collectionMap) {
+            // Normalize
+            uri = uri.toLowerCase();
+
+            UriMetadata metadata = collectionMap.get(uri);
+            if (metadata == null) {
+                metadata = new UriMetadata();
+                collectionMap.put(uri, metadata);
+            }
+
+            return metadata;
         }
-        
-        return metadata;
     }
     
     /** Sets the UUID for a URI. */
@@ -194,54 +198,58 @@ public class CollectorMetadata {
     
     /** Saves the metadata to a tab-delimited file. */
     private synchronized void save(File f) throws IOException {
-        try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(f)))) {
-            for (Map.Entry<String, UriMetadata> entry : collectionMap.entrySet()) {
-                String key = entry.getKey();
-                UriMetadata value = entry.getValue();
-                out.printf("%s\t%s%n", key, value.toPersist());
+        synchronized (collectionMap) {
+            try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(f)))) {
+                for (Map.Entry<String, UriMetadata> entry : collectionMap.entrySet()) {
+                    String key = entry.getKey();
+                    UriMetadata value = entry.getValue();
+                    out.printf("%s\t%s%n", key, value.toPersist());
+                }
             }
         }
     }
 
     /** Loads the metadata from a tab-delimited file where each line is URI\tTimestamp\tETag\tHashCode. */
     private synchronized void load(File f) throws IOException {
-        try (BufferedReader in = new BufferedReader(new FileReader(f))) {
-            String line;
-            while ((line = in.readLine()) != null) {
-                line = line.trim();
-                
-                if (line.isEmpty() || line.startsWith("//")) {
-                    // Empty or comment; ignore
-                    continue;
+        synchronized (collectionMap) {
+            try (BufferedReader in = new BufferedReader(new FileReader(f))) {
+                String line;
+                while ((line = in.readLine()) != null) {
+                    line = line.trim();
+
+                    if (line.isEmpty() || line.startsWith("//")) {
+                        // Empty or comment; ignore
+                        continue;
+                    }
+
+                    // Split it on tabs
+                    String[] token = line.split("\t", -1);
+
+                    // Get the tokens
+                    String key = token[0].toLowerCase();
+                    String httpTimestamp = token[1];
+                    String eTag = (token.length > 2)?  token[2] : UriMetadata.NONE;
+                    String hash = (token.length > 3)?  token[3].toLowerCase() : UriMetadata.NONE;
+                    String uuid = (token.length > 4)?  token[4].toLowerCase() : UriMetadata.NONE;
+
+                    UriMetadata value = new UriMetadata();
+                    value.setETag(eTag);
+                    value.setHash(hash);
+                    value.setUuid(uuid);
+
+                    try {
+                        // Convert timestamp to date
+                        Date date = TimestampConvert.rfc1123ToDate(httpTimestamp);
+                        value.setTimestamp(date);
+                    }
+                    catch (ParseException e) {
+                        // Shouldn't happen unless the file has been manually edited.
+                        // If so, we'll just leave the timestamp at the default value.
+                        e.printStackTrace();
+                    }
+
+                    collectionMap.put(key, value);
                 }
-                
-                // Split it on tabs
-                String[] token = line.split("\t", -1);
-                
-                // Get the tokens
-                String key = token[0].toLowerCase();
-                String httpTimestamp = token[1];
-                String eTag = (token.length > 2)?  token[2] : UriMetadata.NONE;
-                String hash = (token.length > 3)?  token[3].toLowerCase() : UriMetadata.NONE;
-                String uuid = (token.length > 4)?  token[4].toLowerCase() : UriMetadata.NONE;
-                
-                UriMetadata value = new UriMetadata();
-                value.setETag(eTag);
-                value.setHash(hash);
-                value.setUuid(uuid);
-                
-                try {
-                    // Convert timestamp to date
-                    Date date = TimestampConvert.rfc1123ToDate(httpTimestamp);
-                    value.setTimestamp(date);
-                }
-                catch (ParseException e) {
-                    // Shouldn't happen unless the file has been manually edited.
-                    // If so, we'll just leave the timestamp at the default value.
-                    e.printStackTrace();
-                }
-                
-                collectionMap.put(key, value);
             }
         }
     }
