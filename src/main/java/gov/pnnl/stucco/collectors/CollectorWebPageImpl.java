@@ -208,13 +208,13 @@ public class CollectorWebPageImpl extends CollectorHttp {
             
 //            String url = "http://espn.go.com";  // FAIL: Timestamp and IDs changed
 //            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
-            String url = "http://www.malwaredomainlist.com/mdl.php?inactive=&sort=Date&search=&colsearch=All&ascordesc=DESC&quantity=10000&page=0";
-
+//            String url = "http://www.malwaredomainlist.com/mdl.php?inactive=&sort=Date&search=&colsearch=All&ascordesc=DESC&quantity=10000&page=0";
+            String url = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2002.xml.gz";
             
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);
-//            configData.put("post-process", "unzip");
+            configData.put("post-process", "unzip");
             CollectorHttp collector = new CollectorWebPageImpl(configData);
 
             System.err.println("COLLECTION #1");
