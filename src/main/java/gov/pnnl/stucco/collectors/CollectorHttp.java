@@ -43,7 +43,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     protected static final Logger logger = LoggerFactory.getLogger(CollectorHttp.class);
     
     /** Number of milliseconds to allow for making a connection. */
-    private static final int TIMEOUT = 15 * 1000;
+    private static final int TIMEOUT = 60 * 1000;
 
     /** Metadata about the pages we've collected. */
     protected static CollectorMetadata pageMetadata = CollectorMetadata.getInstance();

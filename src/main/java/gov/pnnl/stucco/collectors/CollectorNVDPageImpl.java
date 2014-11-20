@@ -45,10 +45,16 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
             // check on whether a file first
             if (uriScheme.equalsIgnoreCase("file")) {
                 obtainFromFile(uriPath);
+                // Post-process if requested
+                String directive = collectorConfigData.get(POSTPROCESS_KEY);
+                rawContent = postProcess(directive, rawContent);
                 processMultiRecords();
             } 
             else if (needToGet(sourceUri)) {
                 if (obtainWebPage(sourceUri)) {
+                    // Post-process if requested
+                    String directive = collectorConfigData.get(POSTPROCESS_KEY);
+                    rawContent = postProcess(directive, rawContent);
                     processMultiRecords();
                 }
             }
@@ -146,7 +152,7 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
 //            String url = "http://seclists.org/rss/fulldisclosure.rss";                              // OK: HEAD conditional
 //            String url = "http://www.reddit.com/r/netsec/new.rss";                                  // FAIL: HEAD conditional or GET SHA-1, but 'ups', 'score', comments change ~10 seconds
 //            String url = "http://blog.cmpxchg8b.com/feeds/posts/default";                           // OK: HEAD Last-Modified
-            String url = "https://technet.microsoft.com/en-us/security/rss/bulletin";               // FAIL: RSS item order changes every time
+//            String url = "https://technet.microsoft.com/en-us/security/rss/bulletin";               // FAIL: RSS item order changes every time
 //            String url = "http://metasploit.org/modules/";                                          // FAIL: 'csrf-token' changes every time
 //            String url = "http://community.rapid7.com/community/metasploit/blog";                   // FAIL: IDs change every time
 //            String url = "http://rss.packetstormsecurity.com/files/";                               // FAIL: 'utmn' changes every time
@@ -159,11 +165,13 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
 //            String url = "https://isc.sans.edu/feeds/daily_sources";                                // OK: HEAD Last-Modified
             
 //            String url = "http://espn.go.com";  // FAIL: Timestamp and IDs changed
+            String url = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2002.xml.gz";               
 
             
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);
+            configData.put("post-process", "unzip");
             CollectorNVDPageImpl collector = new CollectorNVDPageImpl(configData);
 //            try {
 //                collector.obtainWebPage("https://isc.sans.edu/diary.html?storyid=18311&rss");
@@ -176,8 +184,8 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
             collector.collect();
             
             Thread.sleep(2000);
-            System.err.println("\nCOLLECTION #2");
-            collector.collect();
+//            System.err.println("\nCOLLECTION #2");
+//            collector.collect();
         }
         catch (InterruptedException e) {
             e.printStackTrace();

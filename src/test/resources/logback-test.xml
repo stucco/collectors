@@ -79,12 +79,22 @@
 			<maxFileSize>5MB</maxFileSize>
 		</triggeringPolicy>
 	</appender>
+	
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>${LOG_LEVEL}</level>
+        </filter>
+	    <encoder>
+		    <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level (%file:%line\) - %message%n</pattern>
+	    </encoder>
+    </appender>
 
 	<root level="all">
 		<appender-ref ref="stdout" />
 		<appender-ref ref="file" />
 		<appender-ref ref="errfile" />
-		<appender-ref ref="logstash" />
+        <appender-ref ref="logstash" />
+        <appender-ref ref="console" />
 	</root>
 
 </configuration>

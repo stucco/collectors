@@ -50,6 +50,10 @@ public class CollectorWebPageImpl extends CollectorHttp {
         try {
             if (needToGet(sourceUri)) {
                 if (obtainWebPage(sourceUri)) {
+                    // Post-process if requested
+                    String directive = collectorConfigData.get(POSTPROCESS_KEY);
+                    rawContent = postProcess(directive, rawContent);
+                    
                     storeDocument();                    
                     send();
                 }
@@ -205,25 +209,22 @@ public class CollectorWebPageImpl extends CollectorHttp {
 //            String url = "https://isc.sans.edu/feeds/daily_sources";                                // OK: HEAD Last-Modified
             
 //            String url = "http://espn.go.com";  // FAIL: Timestamp and IDs changed
-
+//            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
+//            String url = "http://www.malwaredomainlist.com/mdl.php?inactive=&sort=Date&search=&colsearch=All&ascordesc=DESC&quantity=10000&page=0";
+            String url = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2002.xml.gz";
             
             Config.setConfigFile(new File("../config/stucco.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("source-URI", url);
+            configData.put("post-process", "unzip");
             CollectorHttp collector = new CollectorWebPageImpl(configData);
-//            try {
-//                collector.obtainWebPage("https://isc.sans.edu/diary.html?storyid=18311&rss");
-//            }
-//            catch (IOException e) {
-//                // TODO Auto-generated catch block
-//                e.printStackTrace();
-//            }
+
             System.err.println("COLLECTION #1");
             collector.collect();
             
             Thread.sleep(2000);
             System.err.println("\nCOLLECTION #2");
-            collector.collect();
+//            collector.collect();
         }
         catch (InterruptedException e) {
             e.printStackTrace();
