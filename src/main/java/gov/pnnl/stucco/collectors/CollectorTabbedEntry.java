@@ -48,7 +48,7 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
             clean();
         }
         catch (IOException e) {
-            logger.error("Exception raised while reading web page", e);
+            logger.error("Exception raised while reading web page:  " +  sourceUri, e);
         }
         catch (DocServiceException e) {
             logger.error("Cannot send data", e);

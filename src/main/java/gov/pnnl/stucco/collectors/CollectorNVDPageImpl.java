@@ -64,7 +64,7 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
             logger.error("Exception in parsing URI "+ sourceUri);
         }
         catch (IOException e) {
-            logger.error("Exception raised while reading web page", e);
+            logger.error("Exception raised while reading web page: " + sourceUri, e);
         } 
     }
 

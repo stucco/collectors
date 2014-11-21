@@ -61,10 +61,10 @@ public class CollectorWebPageImpl extends CollectorHttp {
             clean();
         }
         catch (IOException e) {
-            logger.error("Exception raised while reading web page", e);
+            logger.error("Exception raised while reading web page:  " + sourceUri, e);
         } 
         catch (DocServiceException e) {
-            logger.error("DocServiceException");
+            logger.error("DocServiceException for URI: " + sourceUri, e);
         }
     }
     

@@ -62,7 +62,7 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
             }
         }
         catch (IOException e) {
-            logger.error("Exception raised while reading web page", e);
+            logger.error("Exception raised while reading web page:  " + sourceUri, e);
         } 
         finally {
             clean();

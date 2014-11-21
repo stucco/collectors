@@ -68,7 +68,7 @@ public class CollectorBugtraqListing extends CollectorWebPageImpl {
             clean();
         }
         catch (IOException e) {
-            logger.error("Exception raised while reading web page", e);
+            logger.error("Exception raised while reading web page:  " + sourceUri, e);
         }
     }
 

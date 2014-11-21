@@ -45,7 +45,7 @@ public class CollectorRssImpl extends CollectorHttp {
         }
         catch (IOException e) 
         {
-            logger.error("Exception raised while reading feed", e);
+            logger.error("Exception raised while reading feed:  " + sourceUri, e);
         }
     }
     
