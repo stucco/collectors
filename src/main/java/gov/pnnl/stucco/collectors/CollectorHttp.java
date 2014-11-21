@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.collectors;
 
+import gov.pnnl.stucco.utilities.FeedCollectionStatus;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
 import gov.pnnl.stucco.utilities.UriMetadata;
 
@@ -28,13 +29,16 @@ import org.slf4j.LoggerFactory;
 public abstract class CollectorHttp extends CollectorAbstractBase {
 
     /** Configuration data key for a collector's URI. */
-    protected static final String SOURCE_URI = "source-URI";
+    public static final String SOURCE_URI = "source-URI";
 
+    /** Configuration data key for scheduler startup behavior. */
+    public static final String NOW_COLLECT_KEY = "now-collect";
+    
     /** Configuration data key for a regex for finding tabbed subpages. */
-    protected static final String TAB_REGEX_KEY = "tab-regex";
+    public static final String TAB_REGEX_KEY = "tab-regex";
     
     /** Configuration data key for robots.txt Crawl-delay. */
-    protected static final String CRAWL_DELAY_KEY = "crawl-delay";
+    public static final String CRAWL_DELAY_KEY = "crawl-delay";
     
     protected static final Logger logger = LoggerFactory.getLogger(CollectorHttp.class);
     
@@ -53,12 +57,21 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     /** Content of the message that got sent (empty if there wasn't one). */
     protected byte[] messageContent = new byte[0];
 
+    /** Whether to force collection, even if a duplicate is encountered. */
+    private boolean forcedCollection = false;
+    
+    /** Status of our collection effort. */
+    private FeedCollectionStatus collectionStatus = FeedCollectionStatus.GO;
+    
     
     public CollectorHttp(Map<String, String> configData) {
         super(configData);
         
         sourceUri = configData.get(SOURCE_URI);  // should probably encode the URI here in-case there are weird characters URLEncoder.encode(URI, "UTF-8");
         messageMetadata.put("sourceUrl", sourceUri);
+        
+        String nowCollect = configData.get(NOW_COLLECT_KEY);
+        forcedCollection = "all".equalsIgnoreCase(nowCollect);
     }
     
     final public String getDocId() {
@@ -73,6 +86,18 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         return messageContent;
     }
     
+    final public boolean isForcedCollection() {
+        return forcedCollection;
+    }
+
+    final public FeedCollectionStatus getCollectionStatus() {
+        return collectionStatus;
+    }
+
+    final public void setCollectionStatus(FeedCollectionStatus status) {
+        collectionStatus = status;
+    }
+
     /** Writes the current content to a temp file that can be inspected post-run. */
     protected void debugSaveContent(String uri) {
         try {
@@ -100,12 +125,13 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     }
 
     /** 
-     * Makes a conditional HTTP request, using stored metadata.
+     * Makes an HTTP request, using stored metadata. Depending on the 
+     * circumstances, the request may be conditional.
      * 
      * @param httpRequestMethod  HTTP request such as "GET" or "HEAD"
      * @param uri                HTTP target URI
      */
-    protected HttpURLConnection makeConditionalRequest(String httpRequestMethod, String uri)
+    protected HttpURLConnection makeRequest(String httpRequestMethod, String uri)
             throws IOException {
         
         pauseCrawlDelay();
@@ -116,18 +142,20 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         connection.setRequestMethod(httpRequestMethod);
         connection.setReadTimeout(TIMEOUT);
         
-        // Add metadata hints (which may get ignored):
-        
-        // Timestamp
-        long lastTime = pageMetadata.getTimestamp(uri).getTime();
-        connection.setIfModifiedSince(lastTime);
-        
-        // ETag
-        String lastETag = pageMetadata.getETag(uri);
-        if (!lastETag.equals(UriMetadata.NONE)) {
-            connection.setRequestProperty("If-None-Match", lastETag);
+        boolean isConditional = !isForcedCollection();
+        if (isConditional) {
+            // Add metadata hints (which may get ignored anyway):
+
+            // Timestamp
+            long lastTime = pageMetadata.getTimestamp(uri).getTime();
+            connection.setIfModifiedSince(lastTime);
+
+            // ETag
+            String lastETag = pageMetadata.getETag(uri);
+            if (!lastETag.equals(UriMetadata.NONE)) {
+                connection.setRequestProperty("If-None-Match", lastETag);
+            }
         }
-        
         
         // Make request
         logger.info("{} - {}", uri, httpRequestMethod);
@@ -234,9 +262,12 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     /** 
      * Performs a header-based pre-retrieval check on a URI to see if we need 
      * to get its content. 
+     * 
+     * <p> NOTE: This method is low-level, and intentionally does not set feed 
+     * collection status.
      */
     protected final boolean needToGet(String uri) throws IOException {
-        HttpURLConnection connection = makeConditionalRequest("HEAD", uri);
+        HttpURLConnection connection = makeRequest("HEAD", uri);
         int responseCode = getEnhancedResponseCode(connection);
         
         switch (responseCode) {
@@ -244,8 +275,8 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
             case HttpURLConnection.HTTP_NO_CONTENT:
             case HttpURLConnection.HTTP_MULT_CHOICE:
             case HttpURLConnection.HTTP_SEE_OTHER:
-            case HttpURLConnection.HTTP_USE_PROXY:
             case HttpURLConnection.HTTP_NOT_MODIFIED:
+            case HttpURLConnection.HTTP_USE_PROXY:
             case HttpURLConnection.HTTP_BAD_REQUEST:
             case HttpURLConnection.HTTP_UNAUTHORIZED:
             case HttpURLConnection.HTTP_PAYMENT_REQUIRED:
@@ -262,7 +293,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
             case HttpURLConnection.HTTP_UNAVAILABLE:
             case HttpURLConnection.HTTP_VERSION:
                 return false;
-            
+                
             // Codes where the GET request might work
             case HttpURLConnection.HTTP_OK:
             case HttpURLConnection.HTTP_CREATED:

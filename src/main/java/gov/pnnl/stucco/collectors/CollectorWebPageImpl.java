@@ -6,6 +6,7 @@ package gov.pnnl.stucco.collectors;
 
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
 import gov.pnnl.stucco.doc_service_client.DocumentObject;
+import gov.pnnl.stucco.utilities.FeedCollectionStatus;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
 
 import java.io.BufferedInputStream;
@@ -63,7 +64,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
             logger.error("Exception raised while reading web page", e);
         } 
         catch (DocServiceException e) {
-            logger.error("Cannot send data", e);
+            logger.error("DocServiceException");
         }
     }
     
@@ -74,15 +75,18 @@ public class CollectorWebPageImpl extends CollectorHttp {
     /**
      * Retrieves the webpage.
      *
-     * @return Whether we got new content
+     * @return 
+     * Whether we got sufficient content to continue. If we are set to force
+     * collection, then getting content is sufficient. Otherwise, the content
+     * must also be new.
      */
     protected final boolean obtainWebPage(String uri) throws IOException
     {
-        HttpURLConnection connection = makeConditionalRequest("GET", uri);
+        HttpURLConnection connection = makeRequest("GET", uri);
         int responseCode = getEnhancedResponseCode(connection);
-        boolean isNewContent = (responseCode == HttpURLConnection.HTTP_OK);
+        boolean ok = (responseCode == HttpURLConnection.HTTP_OK);
         
-        if (isNewContent) {
+        if (ok) {
             // So far it seems new
             
             messageMetadata.put("contentType", connection.getHeaderField("Content-Type"));
@@ -117,7 +121,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
         
             
             // Update the metadata
-            isNewContent = updatePageMetadata(uri, timestamp, eTag, checksum);
+            boolean isNewContent = updatePageMetadata(uri, timestamp, eTag, checksum);
             String endUri = connection.getURL().toExternalForm();
             if (!uri.equalsIgnoreCase(endUri)) {
                 // We got redirected, so save metadata for the end URL too
@@ -125,19 +129,17 @@ public class CollectorWebPageImpl extends CollectorHttp {
             }
             pageMetadata.save();
             
-            if (isNewContent) {
-                // Save the new content
-                rawContent = content;
-            }
-            else {
+            if (!isNewContent) {
                 // Content isn't new
-                logger.info("{} - SHA-1 unchanged", endUri);
-                rawContent = null;
+                logger.info("{} - SHA-1 unchanged", endUri);                
             }
-            rawContent = isNewContent?  content : null;            
+
+            ok = isNewContent || isForcedCollection();            
+
+            rawContent = (ok?  content : null);            
         }
         
-        return isNewContent;
+        return ok;
     }
 
     /** Updates the metadata for a URL after a successful GET. */

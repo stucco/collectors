@@ -3,11 +3,13 @@ package gov.pnnl.stucco.utilities;
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
+import gov.pnnl.stucco.collectors.CollectorHttp;
 import gov.pnnl.stucco.collectors.Config;
 import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.quartz.CronExpression;
@@ -42,15 +44,14 @@ public class CollectorScheduler {
             
             for(Object obj : collectorConfigs) {
                 Map<String, Object> collectorConfig = (Map<String, Object>) obj;
-                JobDataMap jobData = CollectorJob.convertToJobDataMap(collectorConfig);
                 
                 // Get info from configuration
                 
                 // URI
-                String uri = (String) collectorConfig.get("source-URI");
+                String uri = (String) collectorConfig.get(CollectorHttp.SOURCE_URI);
                 
                 // What to do on start up
-                String startUp = (String) collectorConfig.get("now-collect");
+                String startUp = (String) collectorConfig.get(CollectorHttp.NOW_COLLECT_KEY);
                 startUp = (startUp == null)? "none" : startUp.trim();
                 
                 // The schedule
@@ -61,12 +62,21 @@ public class CollectorScheduler {
                 // We'll collect at startup and/or on a schedule
                 
                 if (!startUp.equalsIgnoreCase("none")) {
-                    // At startup
+                    // Copy the configuration data as is
+                    Map<String, Object> copyConfig = new HashMap<String, Object>(collectorConfig);
+                    JobDataMap jobData = CollectorJob.convertToJobDataMap(copyConfig);
+                    
+                    // Schedule immediately
                     scheduleJob(sched, jobData, uri, "now");
                 }
                 
                 if (CronExpression.isValidExpression(cronExpr)) {
-                    // On a schedule
+                    // Copy configuration data, but remove key intended for start-up only
+                    Map<String, Object> copyConfig = new HashMap<String, Object>(collectorConfig);
+                    copyConfig.remove(CollectorHttp.NOW_COLLECT_KEY);
+                    JobDataMap jobData = CollectorJob.convertToJobDataMap(copyConfig);
+
+                    // Add to schedule
                     scheduleJob(sched, jobData, uri, cronExpr);
                 }
                 else if (cronExpr.isEmpty()) {

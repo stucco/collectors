@@ -34,7 +34,11 @@ public class CollectorRssImpl extends CollectorHttp {
     public void collect() {
         try {
             logger.info("{} - Collecting feed", sourceUri);
-            if (needToGet(sourceUri)) {
+            
+            // See if we want everything, otherwise we want new content only
+            boolean getEverything = isForcedCollection();
+            
+            if (getEverything || needToGet(sourceUri)) {
                 obtainFeed(sourceUri);
             }
             clean();
@@ -47,10 +51,11 @@ public class CollectorRssImpl extends CollectorHttp {
     
     /**
      * Retrieves the RSS feed and the items in it.
-     *
-     * @return Whether the RSS feed had new entries
+     * 
+     * <p> If we are looking for new content only, we first check for a change
+     * to the checksum of the feed's URLs.
      */
-    private boolean obtainFeed(String url) {
+    private void obtainFeed(String url) {
         try {
             // Read the feed with the ROME library
             SyndFeedInput input = new SyndFeedInput();
@@ -63,9 +68,14 @@ public class CollectorRssImpl extends CollectorHttp {
             // Checksum the list of feed URLs
             String checksum = computeFeedChecksum(feed, true);
             String oldChecksum = pageMetadata.getHash(url);
-            boolean isNewContent = !oldChecksum.equalsIgnoreCase(checksum);
+            boolean isNewContent = !oldChecksum.equalsIgnoreCase(checksum);            
             
-            if (isNewContent) {
+            if (!isNewContent) {
+                logger.info("{} - feed SHA-1 unchanged", url);
+            }
+            
+            boolean getPages = isNewContent || isForcedCollection();
+            if (getPages) {
                 // Get the pages
                 obtainFeedPages(feed, sourceName);
 
@@ -84,16 +94,11 @@ public class CollectorRssImpl extends CollectorHttp {
                 pageMetadata.setHash(url, checksum);
                 pageMetadata.save();
             }
-            else {
-                logger.info("{} - feed SHA-1 unchanged", url);
-            }
             
             clean();
-            return isNewContent;
         } 
         catch (IOException | FeedException e) {
             e.printStackTrace();
-            return true;
         }
     }
 
@@ -140,7 +145,7 @@ public class CollectorRssImpl extends CollectorHttp {
     /** Cycles through an RSS feed list, retrieving content from the individual URLs. */
     private void obtainFeedPages(SyndFeed feed, String sourceName) {
         Map<String, String> entryConfig = new HashMap<String, String>();
-
+        
         // Get the type of the pages in the feed
         String tabRegEx = collectorConfigData.get(TAB_REGEX_KEY);
         
@@ -196,10 +201,10 @@ public class CollectorRssImpl extends CollectorHttp {
             configData.put("data-type", "structured");
             configData.put("source-name:", "sophos");
             configData.put("source-URI", url);
-            configData.put("tab-regex", tabRegEx);
+            configData.put(TAB_REGEX_KEY, tabRegEx);
             configData.put("content-type", "text/xml");
             configData.put("store-entry", "true");
-            configData.put("now-collect", "new");
+            configData.put(NOW_COLLECT_KEY, "new");
             configData.put("cron", "0 10 * * * ?");
                     
             CollectorHttp collector = new CollectorRssImpl(configData);
@@ -208,7 +213,7 @@ public class CollectorRssImpl extends CollectorHttp {
             
 //            Thread.sleep(2000);
 //            System.err.println("\nCOLLECTION #2");
-//            collector.collect();
+            collector.collect();
 //        }
 //        catch (InterruptedException e) {
 //            e.printStackTrace();
