@@ -8,15 +8,11 @@
 		value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{48} - %msg%n" />
 
 	<!-- ===>>> CONSOLE <<<=== -->
-	<property name="STDOUT_LOG_LEVEL" value="ERROR" />
+	<property name="STDOUT_LOG_LEVEL" value="${stdout_level}:-WARN" />
 
 	<!-- ===>>> FILES <<<=== -->
 	<property name="LOG_NAME" value="stucco-scheduler-test" />
 	<property name="LOG_LEVEL" value="DEBUG" />
-
-	<!-- ===> LOGSTASH <<<=== -->
-	<property name="LOGSTASH_NAME" value="logstash" />
-	<property name="LOGSTASH_LEVEL" value="INFO" />
 
 	<!-- <<<== END USER CONFIGURABLE PROPERTIES ==>>> -->
 
@@ -62,39 +58,10 @@
 		</rollingPolicy>
 	</appender>
 
-	<appender name="logstash"
-		class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-			<level>${LOGSTASH_LEVEL}</level>
-		</filter>
-		<file>${LOGSTASH_NAME}.log</file>
-		<encoder class="net.logstash.logback.encoder.LogstashEncoder" />
-		<rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-			<fileNamePattern>${LOGSTASH_NAME}.%i.log.zip</fileNamePattern>
-			<minIndex>1</minIndex>
-			<maxIndex>3</maxIndex>
-		</rollingPolicy>
-		<triggeringPolicy
-			class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-			<maxFileSize>5MB</maxFileSize>
-		</triggeringPolicy>
-	</appender>
-	
-	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
-        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>${LOG_LEVEL}</level>
-        </filter>
-	    <encoder>
-		    <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level (%file:%line\) - %message%n</pattern>
-	    </encoder>
-    </appender>
-
 	<root level="all">
 		<appender-ref ref="stdout" />
 		<appender-ref ref="file" />
 		<appender-ref ref="errfile" />
-        <appender-ref ref="logstash" />
-        <appender-ref ref="console" />
 	</root>
 
 </configuration>
