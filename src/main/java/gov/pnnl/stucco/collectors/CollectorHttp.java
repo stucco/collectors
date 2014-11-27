@@ -2,7 +2,7 @@ package gov.pnnl.stucco.collectors;
 
 import gov.pnnl.stucco.utilities.FeedCollectionStatus;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
-import gov.pnnl.stucco.utilities.UriMetadata;
+import gov.pnnl.stucco.utilities.MutableUriMetadata;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -152,7 +152,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
 
             // ETag
             String lastETag = pageMetadata.getETag(uri);
-            if (!lastETag.equals(UriMetadata.NONE)) {
+            if (!lastETag.equals(MutableUriMetadata.NONE)) {
                 connection.setRequestProperty("If-None-Match", lastETag);
             }
         }
@@ -228,7 +228,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                     // Check hash
                     String lastETag = pageMetadata.getETag(uri);
                     String eTag = connection.getHeaderField("ETag");
-                    if (eTag != null  &&  !lastETag.equals(UriMetadata.NONE)  &&  eTag.equals(lastETag)) {
+                    if (eTag != null  &&  !lastETag.equals(MutableUriMetadata.NONE)  &&  eTag.equals(lastETag)) {
                         // Page is unmodified
                         responseCode = HttpURLConnection.HTTP_NOT_MODIFIED;
     
@@ -393,7 +393,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
             tabCollector.collect();
             
             String tabDocId = pageMetadata.getUuid(url);
-            if (tabDocId != UriMetadata.NONE) {
+            if (tabDocId != MutableUriMetadata.NONE) {
                 // We have a record of this tab, meaning we just collected it or
                 // we already had it. Either way we add it to the message.
                 //

@@ -1,18 +1,19 @@
 package gov.pnnl.stucco.utilities;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.SortedMap;
-import java.util.TreeMap;
+
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+
 
 /** 
  * Repository for metadata used to help collectors know whether content has been updated. 
@@ -22,18 +23,21 @@ public class CollectorMetadata {
     private static final CollectorMetadata singleton;
     static {
         try {
-            singleton = new CollectorMetadata(new File("CollectorMetadata.db"));
+            singleton = new CollectorMetadata(new File("CollectorMetadata.mdb"));
         }
         catch (IOException e) {
             throw new ExceptionInInitializerError(e);
         }
     }
 
-    /** Map of lowercased Uri Strings to UriCollectionRecords. */
-    private final SortedMap<String, UriMetadata> collectionMap = new TreeMap<String, UriMetadata>();
+    /** The MapDB database. */
+    private DB db;
     
-    /** File for persisting the metadata. Each line is: URI\tTimestamp\tETag\tHashCode. */
-    private File persistenceFile;
+    /** 
+     * Map of lowercased URI Strings to URI Metadata. The values must be 
+     * immutable in order to use MapDB.
+     */
+    private SortedMap<String, ImmutableUriMetadata> collectionMap;
     
     
     
@@ -42,49 +46,86 @@ public class CollectorMetadata {
     }
     
     private CollectorMetadata(File persistenceFile) throws IOException {
-        this.persistenceFile = persistenceFile;
+        // configure and open database using builder pattern.
+        // all options are available with code auto-completion.
+        db = DBMaker.newFileDB(persistenceFile)
+                .closeOnJvmShutdown()
+                .make();
+
+        // open existing an collection (or create new)
+        collectionMap = db.getTreeMap("collectionMap");
         
-        if (persistenceFile.exists()) {
-            load(persistenceFile);
-        }
-        else {
-            // Not there, so create an empty one
-            save();
+        debugPrint();
+    }
+    
+    /** Gets the number of entries in the metadata collection. */
+    public int size() {
+        int count = collectionMap.size();
+        return count;
+    }
+    
+    /** Gets the URLs in the metadata collection. */
+    public List<String> getUrls() {
+        List<String> urlList = new ArrayList<String>(collectionMap.keySet());
+        return urlList;
+    }
+    
+    /** Debug method for printing the collection. */
+    private void debugPrint() {
+        Set<Entry<String, ImmutableUriMetadata>> entrySet = collectionMap.entrySet();
+        for (Entry<String, ImmutableUriMetadata> entry : entrySet) {
+            String url = entry.getKey();
+            ImmutableUriMetadata metadata = entry.getValue();
+            System.err.println("Key: " + url);
+            System.err.println("Value: ");
+            String uuid = metadata.getUuid();
+            String hash = metadata.getHash();
+            String eTag = metadata.getETag();
+            Date time = metadata.getTimestamp();
+            System.err.println("  UUID = " + uuid);
+            System.err.println("  SHA-1 = " + hash);
+            System.err.println("  ETag = " + eTag);
+            System.err.println("  Time = " + time);
         }
     } 
     
     /** Gets whether there's metadata for a given URI. */
     public boolean contains(String uri) {
-        synchronized (collectionMap) {
-            return collectionMap.containsKey(uri);
-        }
+        return collectionMap.containsKey(uri);
     }
     
-    /** Gets metadata for a URI, creating a new object if necessary. */
-    private UriMetadata getOrCreateMetadata(String uri) {
-        synchronized (collectionMap) {
-            // Normalize
-            uri = uri.toLowerCase();
+    /** Gets metadata for a URI, creating a new object. */
+    private MutableUriMetadata getMetadata(String uri) {
+        // Normalize
+        uri = uri.toLowerCase();
+        
+        ImmutableUriMetadata metadata = collectionMap.get(uri);
 
-            UriMetadata metadata = collectionMap.get(uri);
-            if (metadata == null) {
-                metadata = new UriMetadata();
-                collectionMap.put(uri, metadata);
-            }
-
-            return metadata;
+        if (metadata == null) {
+        	return new MutableUriMetadata();
         }
+        else {
+        	return new MutableUriMetadata(metadata);
+        }
+        
+    }
+    
+    /** Puts URI metadata into the map. */
+    private void putMetadata(String uri, MutableUriMetadata metadata) {
+        ImmutableUriMetadata copy = new ImmutableUriMetadata(metadata);
+        collectionMap.put(uri, copy);
     }
     
     /** Sets the UUID for a URI. */
     public void setUuid(String uri, String uuid) {
-        UriMetadata metadata = getOrCreateMetadata(uri);
+        MutableUriMetadata metadata = getMetadata(uri);
         metadata.setUuid(uuid);
+        putMetadata(uri, metadata);
     }
     
     /** Gets the UUID for a URI. */
     public String getUuid(String uri) {
-        UriMetadata metadata = getOrCreateMetadata(uri);
+        MutableUriMetadata metadata = getMetadata(uri);
         String uuid = metadata.getUuid();
         
         return uuid;
@@ -92,13 +133,14 @@ public class CollectorMetadata {
     
     /** Sets the timestamp for a URI. */ 
     public void setTimestamp(String uri, Date timestamp) {
-        UriMetadata metadata = getOrCreateMetadata(uri);
+        MutableUriMetadata metadata = getMetadata(uri);
         metadata.setTimestamp(timestamp);
-    }
+        putMetadata(uri, metadata);
+   }
     
     /** Gets the timestamp for a URI. */
     public Date getTimestamp(String uri) {
-        UriMetadata metadata = getOrCreateMetadata(uri);
+        MutableUriMetadata metadata = getMetadata(uri);
         Date timestamp = metadata.getTimestamp();
         
         return timestamp;
@@ -113,8 +155,9 @@ public class CollectorMetadata {
     
     /** Sets the HTTP ETag for a URI. */
     public void setETag(String uri, String eTag) {
-        UriMetadata metadata = getOrCreateMetadata(uri);
+        MutableUriMetadata metadata = getMetadata(uri);
         metadata.setETag(eTag);
+        putMetadata(uri, metadata);
     }
     
     /** 
@@ -123,7 +166,7 @@ public class CollectorMetadata {
      * @return ETag (or CollectorMetadata.NONE)
      */
     public String getETag(String uri) {
-        UriMetadata metadata = getOrCreateMetadata(uri);
+        MutableUriMetadata metadata = getMetadata(uri);
         String eTag = metadata.getETag();
         
         return eTag;
@@ -157,7 +200,7 @@ public class CollectorMetadata {
     
     /** Computes our internal hash for byte content. */
     public static String computeHash(byte[] content) {
-        String checksum = UriMetadata.NONE;
+        String checksum = MutableUriMetadata.NONE;
         try {
             checksum = FileChecksum.compute("SHA-1", content);
         }
@@ -173,8 +216,9 @@ public class CollectorMetadata {
         String oldChecksum = getHash(uri);
         boolean changed = !oldChecksum.equalsIgnoreCase(checksum);
         if (changed) {
-            UriMetadata metadata = getOrCreateMetadata(uri);
+            MutableUriMetadata metadata = getMetadata(uri);
             metadata.setHash(checksum);
+            putMetadata(uri, metadata);
         }
         
         return changed;
@@ -186,71 +230,34 @@ public class CollectorMetadata {
      * @return Hash (or CollectorMetadata.NONE)
      */
     public String getHash(String uri) {
-        UriMetadata metadata = getOrCreateMetadata(uri);
+        MutableUriMetadata metadata = getMetadata(uri);
         String hashCode = metadata.getHash();
         return hashCode;
     }
     
-    /** Saves the metadata to our tab-delimited file. */
-    public void save() throws IOException {
-        save(persistenceFile);
+    /** 
+     * Removes a single URL key from the metadata. 
+     *
+     * <p> Call save() to complete the operation.
+     */
+    public void remove(String url) {
+        collectionMap.remove(url);
     }
     
-    /** Saves the metadata to a tab-delimited file. */
-    private synchronized void save(File f) throws IOException {
-        synchronized (collectionMap) {
-            try (PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter(f)))) {
-                for (Map.Entry<String, UriMetadata> entry : collectionMap.entrySet()) {
-                    String key = entry.getKey();
-                    UriMetadata value = entry.getValue();
-                    out.printf("%s\t%s%n", key, value.toPersist());
-                }
-            }
+    /** 
+     * Removes multiple URL keys from the metadata. 
+     * 
+     * <p> Call save() to complete the operation.
+     */
+    public void removeAll(Collection<String> urls) {
+        for (String url : urls) {
+            remove(url);
         }
     }
-
-    /** Loads the metadata from a tab-delimited file where each line is URI\tTimestamp\tETag\tHashCode. */
-    private synchronized void load(File f) throws IOException {
-        synchronized (collectionMap) {
-            try (BufferedReader in = new BufferedReader(new FileReader(f))) {
-                String line;
-                while ((line = in.readLine()) != null) {
-                    line = line.trim();
-
-                    if (line.isEmpty() || line.startsWith("//")) {
-                        // Empty or comment; ignore
-                        continue;
-                    }
-
-                    // Split it on tabs
-                    String[] token = line.split("\t", -1);
-
-                    // Get the tokens
-                    String key = token[0].toLowerCase();
-                    String httpTimestamp = token[1];
-                    String eTag = (token.length > 2)?  token[2] : UriMetadata.NONE;
-                    String hash = (token.length > 3)?  token[3].toLowerCase() : UriMetadata.NONE;
-                    String uuid = (token.length > 4)?  token[4].toLowerCase() : UriMetadata.NONE;
-
-                    UriMetadata value = new UriMetadata();
-                    value.setETag(eTag);
-                    value.setHash(hash);
-                    value.setUuid(uuid);
-
-                    try {
-                        // Convert timestamp to date
-                        Date date = TimestampConvert.rfc1123ToDate(httpTimestamp);
-                        value.setTimestamp(date);
-                    }
-                    catch (ParseException e) {
-                        // Shouldn't happen unless the file has been manually edited.
-                        // If so, we'll just leave the timestamp at the default value.
-                        e.printStackTrace();
-                    }
-
-                    collectionMap.put(key, value);
-                }
-            }
-        }
+    
+    /** Saves the metadata to our tab-delimited file. */
+    public void save() throws IOException {
+        db.commit();
     }
+    
 }
