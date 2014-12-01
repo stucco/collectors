@@ -1,10 +1,14 @@
 package gov.pnnl.stucco.utilities;
 
+import java.io.Serializable;
 import java.util.Date;
 
-/** Struct-like class holding the metadata for collection at one URI. */
-public class UriMetadata {
-    /** Magic value indicating there is no value. */
+/** Data class containing the metadata for collection at one URI. */
+public class MutableUriMetadata implements Serializable {
+	// For Serializable
+	private static final long serialVersionUID = 361465469785419709L;
+
+	/** Magic value indicating there is no value. */
     public static final String NONE = "";
 
     /** Timestamp (never null). */
@@ -22,12 +26,28 @@ public class UriMetadata {
     
     /**
      * Constructs an empty record. It will default to the start-of-epoch 
-     * Date and an empty hash. 
+     * Date and empty String values. 
      */
-    public UriMetadata() {
+    public MutableUriMetadata() {
     }
     
-    public void setUuid(String uuid) {
+    /** Creates a mutable copy of an immutable record. */
+    public MutableUriMetadata(MutableUriMetadata original) {
+    	timestamp = original.getTimestamp();
+    	uuid = original.getUuid();
+    	eTag = original.getETag();
+    	hash = original.getHash();
+	}
+
+    /** Creates a mutable copy of an immutable record. */
+    public MutableUriMetadata(ImmutableUriMetadata original) {
+    	timestamp = original.getTimestamp();
+    	uuid = original.getUuid();
+    	eTag = original.getETag();
+    	hash = original.getHash();
+	}
+
+	public void setUuid(String uuid) {
         this.uuid = uuid;
     }
     
@@ -72,15 +92,6 @@ public class UriMetadata {
     }
 
     public String toString() {
-        return toPersist();
-    }
-    
-    /** 
-     * Converts to human-readable format used for persisting the data. 
-     * 
-     * <p>Using this instead of toString() makes calls to it easier to find.
-     */
-    public String toPersist() {
         String httpTimestamp = TimestampConvert.dateToRfc1123(timestamp);
         return String.format("%s\t%s\t%s\t%s", httpTimestamp, eTag, hash, uuid);
     }
