@@ -112,6 +112,9 @@ public class CollectorMetadata {
     
     /** Puts URI metadata into the map. */
     private void putMetadata(String uri, MutableUriMetadata metadata) {
+        // Normalize
+        uri = uri.toLowerCase();
+                
         ImmutableUriMetadata copy = new ImmutableUriMetadata(metadata);
         collectionMap.put(uri, copy);
     }
