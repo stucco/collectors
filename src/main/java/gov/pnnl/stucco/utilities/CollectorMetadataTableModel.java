@@ -1,6 +1,5 @@
 package gov.pnnl.stucco.utilities;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -14,6 +13,13 @@ import javax.swing.table.AbstractTableModel;
 public class CollectorMetadataTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
+    
+    // Column numbers
+    public static final int URL_COLUMN = 0;
+    public static final int TIMESTAMP_COLUMN = 1;
+    public static final int UUID_COLUMN = 2;
+    public static final int HASH_COLUMN = 3;
+    public static final int ETAG_COLUMN = 4;
     
     
     // INDEPENDENT fields
@@ -49,24 +55,24 @@ public class CollectorMetadataTableModel extends AbstractTableModel {
         String url = urlList.get(row);
         
         switch (column) {
-            case 0:
+            case URL_COLUMN:
                 return url;
                 
-            case 1:
+            case TIMESTAMP_COLUMN:
                 Date timestamp = metadata.getTimestamp(url);
                 return timestamp;
                 
-            case 2:
-                String hash = metadata.getHash(url);
-                return hash;
-            
-            case 3:
-                String eTag = metadata.getETag(url);
-                return eTag;
-                
-            case 4:
+            case UUID_COLUMN:
                 String uuid = metadata.getUuid(url);
                 return uuid;
+
+            case HASH_COLUMN:
+                String hash = metadata.getHash(url);
+                return hash;         
+                
+            case ETAG_COLUMN:
+                String eTag = metadata.getETag(url);
+                return eTag;
                 
             default:
                 throw new IndexOutOfBoundsException();       
@@ -76,20 +82,20 @@ public class CollectorMetadataTableModel extends AbstractTableModel {
     @Override
     public String getColumnName(int column) {
         switch (column) {
-            case 0:
+            case URL_COLUMN:
                 return "URL";
                 
-            case 1:
+            case TIMESTAMP_COLUMN:
                 return "Timestamp";
                 
-            case 2:
+            case UUID_COLUMN:
+                return "UUID";
+                
+            case HASH_COLUMN:
                 return "SHA-1";
             
-            case 3:
+            case ETAG_COLUMN:
                 return "ETag";
-                
-            case 4:
-                return "UUID";
                 
             default:
                 throw new IndexOutOfBoundsException();       
@@ -111,10 +117,5 @@ public class CollectorMetadataTableModel extends AbstractTableModel {
     /** Updates the URLs from the metadata. */
     private void cacheUrlList(CollectorMetadata metadata) {
         urlList = metadata.getUrls();
-    }
-
-    /** Commits the changes to the backing database. */
-    public void commit() throws IOException {
-        metadata.save();
     }
 }

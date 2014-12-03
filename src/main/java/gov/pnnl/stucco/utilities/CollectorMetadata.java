@@ -7,10 +7,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.SortedMap;
-
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 
@@ -30,6 +29,9 @@ public class CollectorMetadata {
         }
     }
 
+    /** Persistent database file to associate with this class. */
+    private File databaseFile;
+    
     /** The MapDB database. */
     private DB db;
     
@@ -37,7 +39,7 @@ public class CollectorMetadata {
      * Map of lowercased URI Strings to URI Metadata. The values must be 
      * immutable in order to use MapDB.
      */
-    private SortedMap<String, ImmutableUriMetadata> collectionMap;
+    private Map<String, ImmutableUriMetadata> collectionMap;
     
     
     
@@ -46,16 +48,25 @@ public class CollectorMetadata {
     }
     
     private CollectorMetadata(File persistenceFile) throws IOException {
+        databaseFile = persistenceFile;
+
+        getLatestFromDb();
+    }
+    
+    /** Attaches (or reattaches) this to the persisted database. */
+    public void getLatestFromDb() {
+        if (db != null) {
+            db.close();
+        }
+        
         // configure and open database using builder pattern.
         // all options are available with code auto-completion.
-        db = DBMaker.newFileDB(persistenceFile)
+        db = DBMaker.newFileDB(databaseFile)
                 .closeOnJvmShutdown()
                 .make();
-
-        // open existing an collection (or create new)
-        collectionMap = db.getTreeMap("collectionMap");
         
-        debugPrint();
+        // Open an existing collection (or create new)
+        collectionMap = db.getHashMap("hashMap");
     }
     
     /** Gets the number of entries in the metadata collection. */
@@ -261,6 +272,11 @@ public class CollectorMetadata {
     /** Saves the metadata to our tab-delimited file. */
     public void save() throws IOException {
         db.commit();
+    }
+    
+    /** Rolls back any changes since the last save. */
+    public void rollback() {
+        db.rollback();
     }
     
 }
