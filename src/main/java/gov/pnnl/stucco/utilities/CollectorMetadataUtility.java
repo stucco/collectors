@@ -113,7 +113,14 @@ public class CollectorMetadataUtility extends JFrame {
         gbc_refreshButton.anchor = GridBagConstraints.EAST;
         gbc_refreshButton.insets = new Insets(5, 0, 5, 5);
         
-        searchPanel.add(refreshButton, gbc_refreshButton);
+        // Commented out for now. 
+        //
+        // The intent was to be able to refresh while scheduler-controlled 
+        // collectors are adding to the database. However, MapDB doesn't 
+        // support this kind of multiprocess concurrent access, and we are 
+        // seeing exceptions as a result. We may revisit this and switch to 
+        // something (BerkeleyDB?) that supports multiprocess concurrent access.
+//        searchPanel.add(refreshButton, gbc_refreshButton);
         
         JScrollPane scrollPane = new JScrollPane();
         scrollPane.setPreferredSize(new Dimension(1200, 500));
