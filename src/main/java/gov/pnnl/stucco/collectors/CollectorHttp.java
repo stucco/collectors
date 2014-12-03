@@ -128,20 +128,49 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
      * Makes an HTTP request, using stored metadata. Depending on the 
      * circumstances, the request may be conditional.
      * 
-     * @param httpRequestMethod  HTTP request such as "GET" or "HEAD"
-     * @param uri                HTTP target URI
+     * <p> The HttpURLConnection will handle most redirects. However, it 
+     * intentionally won't redirect between HTTP and HTTPS, so we handle
+     * up to 1 redirect to allow for that.
+     * 
+     * @param httpRequestMethod  
+     * HTTP request such as "GET" or "HEAD"
+     * 
+     * @param uri                
+     * HTTP target URI
      */
-    protected HttpURLConnection makeRequest(String httpRequestMethod, String uri)
+    protected HttpURLConnection makeRequest(String httpRequestMethod, String uri) throws IOException {
+        int maxRedirectCount = 1;
+        HttpURLConnection connection = makeRequest(httpRequestMethod, uri, maxRedirectCount);
+        return connection;
+    }
+    
+    /** 
+     * Makes an HTTP request, using stored metadata. Depending on the 
+     * circumstances, the request may be conditional.
+     * 
+     * <p> The HttpURLConnection will handle most redirects; we handle the rest.
+     * 
+     * @param httpRequestMethod  
+     * HTTP request such as "GET" or "HEAD"
+     * 
+     * @param uri                
+     * HTTP target URI
+     * 
+     * @param maxRedirectCount   
+     * Maximum number of redirects that we handle (that is, not counting 
+     * redirects inside HttpURLConnection).
+     */
+    private HttpURLConnection makeRequest(String httpRequestMethod, String uri, int maxRedirectCount)
             throws IOException {
         
         pauseCrawlDelay();
-        
+
         // Set up request
         URL url = new URL(uri);
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(httpRequestMethod);
         connection.setReadTimeout(TIMEOUT);
-        
+
         boolean isConditional = !isForcedCollection();
         if (isConditional) {
             // Add metadata hints (which may get ignored anyway):
@@ -156,14 +185,16 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                 connection.setRequestProperty("If-None-Match", lastETag);
             }
         }
-        
+
         // Make request
         logger.info("{} - {}", uri, httpRequestMethod);
         connection.connect();
-        
+
+        connection = redirectIfNeeded(connection, httpRequestMethod, maxRedirectCount);
+
         return connection;
     }
-    
+   
     /** 
      * Pauses the thread for the number of seconds specified in the Crawl-delay.
      */
@@ -191,6 +222,44 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
         catch (InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    /** 
+     * Checks a connection's response code and, if necessary, redirects to a 
+     * new connection. 
+     * 
+     * @param connection
+     * The current HTTP connection, already connected.
+     * 
+     * @param httpRequestMethod  
+     * HTTP request such as "GET" or "HEAD"
+     * 
+     * @param maxRedirectCount   
+     * Maximum number of redirects allowed. If <= 0, this method just returns
+     * the same connection.
+     * 
+     * @return
+     * A potentially redirected connection
+     */
+    private HttpURLConnection redirectIfNeeded(HttpURLConnection connection, String httpRequestMethod, 
+                                               int maxRedirectCount) throws IOException {
+        if (maxRedirectCount > 0) {
+            int responseCode = connection.getResponseCode();
+            switch (responseCode) {
+                case HttpURLConnection.HTTP_MOVED_PERM:
+                case HttpURLConnection.HTTP_MOVED_TEMP:
+                case HttpURLConnection.HTTP_SEE_OTHER:
+                    String url = connection.getHeaderField("Location");
+                    connection = makeRequest(httpRequestMethod, url, maxRedirectCount - 1);
+                    break;
+
+                default:
+                    // Ignore other cases
+                    break;
+            }
+        }
+        
+        return connection;
     }
 
     /** 
