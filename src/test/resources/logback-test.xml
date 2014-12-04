@@ -8,7 +8,7 @@
 		value="%d{HH:mm:ss.SSS} [%thread] %-5level %logger{48} - %msg%n" />
 
 	<!-- ===>>> CONSOLE <<<=== -->
-	<property name="STDOUT_LOG_LEVEL" value="${stdout_level}:-WARN" />
+	<property name="STDOUT_LOG_LEVEL" value="${stdout_level:-WARN}" />
 
 	<!-- ===>>> FILES <<<=== -->
 	<property name="LOG_NAME" value="stucco-scheduler-test" />
@@ -58,7 +58,7 @@
 		</rollingPolicy>
 	</appender>
 
-	<root level="all">
+	<root level="ALL">
 		<appender-ref ref="stdout" />
 		<appender-ref ref="file" />
 		<appender-ref ref="errfile" />
