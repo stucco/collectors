@@ -11,7 +11,7 @@
         value="%d{HH:mm:ss.SSS} [%thread] %-5level \(%file:%line\) - %msg%n" />
     -->
 	<!-- ===>>> CONSOLE <<<=== -->
-	<property name="STDOUT_LOG_LEVEL" value="${stdout_level}:-WARN" />
+	<property name="STDOUT_LOG_LEVEL" value="${stdout_level:-WARN}" />
 
 	<!-- ===>>> FILES <<<=== -->
 	<property name="LOG_NAME" value="stucco-scheduler" />

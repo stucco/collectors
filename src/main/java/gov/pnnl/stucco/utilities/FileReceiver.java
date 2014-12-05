@@ -79,6 +79,28 @@ public class FileReceiver {
         ConnectionFactory factory = new ConnectionFactory();
         String host = (String) rabbitMq.get("host");
         factory.setHost(host);
+
+        // Set port from config
+        try {
+            String portStr = (String) rabbitMq.get("port");
+            if (portStr != null) {
+                int port = Integer.parseInt(portStr);
+                factory.setPort(port);
+            }
+        } catch (NumberFormatException e) {
+            logger.warn("Invalid port number from configuration; using RabbitMQ default", e);
+        }
+
+        String username = (String) rabbitMq.get("login");
+        if (username != null) {
+            factory.setUsername(username);
+        }
+
+        String password = (String) rabbitMq.get("password");
+        if (password != null) {
+            factory.setPassword(password);
+        }
+
         Connection connection = factory.newConnection();
         Channel channel = connection.createChannel();
 
