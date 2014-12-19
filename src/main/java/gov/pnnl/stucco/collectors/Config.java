@@ -4,14 +4,13 @@ package gov.pnnl.stucco.collectors;
 import gov.pnnl.stucco.jetcd.StuccoClient;
 import gov.pnnl.stucco.jetcd.StuccoJetcdUtil;
 import gov.pnnl.stucco.utilities.CommandLine;
-import gov.pnnl.stucco.utilities.Replayer;
 import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import jetcd.EtcdException;
@@ -21,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Class for YAML configuration file(s).
@@ -54,7 +52,6 @@ public class Config {
         configFile = f;
     }
     
-    @SuppressWarnings("unchecked")
     private Config() {
     }
     
@@ -68,7 +65,7 @@ public class Config {
                 // Use config file
                 Yaml yaml = new Yaml();
                 InputStream input = new FileInputStream(configFile);
-                Map<String, Object> yamlConfig = (Map<String, Object>) yaml.load(input);
+				Map<String, Object> yamlConfig = (Map<String, Object>) yaml.load(input);
                 convertYamlObjectsToString(yamlConfig);
                 
                 config = (Map<String, Object>) yamlConfig.get("default");
@@ -107,6 +104,9 @@ public class Config {
     /** 
      * Modifies a configuration map acquired from a Yaml.load(), to replace
      * non-String values with their toString() equivalents.
+     * 
+     * <p> Currently assumes each Object is either a value, 
+     * Map<String, Object>, or List<Map<String, Object>>.
      */
     private void convertYamlObjectsToString(Map<String, Object> configMap) {
         for (Map.Entry<String, Object> entry : configMap.entrySet()) {
@@ -116,7 +116,14 @@ public class Config {
                 Map<String, Object> submap = (Map<String, Object>) value;
                 convertYamlObjectsToString(submap);
             }
-            else if (!(value instanceof String) && !(value instanceof Collection)) {
+            else if (value instanceof List) {
+            	// List, so recursively convert all its items
+            	List<Map<String, Object>> configList = (List<Map<String, Object>>) value;
+            	for (Map<String, Object> submap : configList) {
+          		    convertYamlObjectsToString(submap);
+            	}
+            }
+            else if (!(value instanceof String) && !(value instanceof List)) {
                 // Convert non-String value to String
                 entry.setValue(value.toString());
             }
