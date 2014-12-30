@@ -40,7 +40,7 @@ public class UnpackUtils {
     
     /** Unpackages single file content, uses various techniques to uncompress it */
     public static byte[] unCompress(byte[] content) throws IOException {
-    	//TODO: should probably catch the case if the file is already uncompressed
+        //TODO: should probably catch the case if the file is already uncompressed
         try (
                 ByteArrayInputStream compressedIn = new ByteArrayInputStream(content);
                 CompressorInputStream compressedInStream = new CompressorStreamFactory().createCompressorInputStream(compressedIn);
@@ -57,7 +57,7 @@ public class UnpackUtils {
         } catch (CompressorException e) {
 //            System.out.println("General gunzip approach failed trying unzip");
 //            e.printStackTrace();
-        	
+            
             // try unzip approach, given the other ones failed
             return unZip(content);
         }

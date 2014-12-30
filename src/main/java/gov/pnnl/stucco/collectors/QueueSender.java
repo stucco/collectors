@@ -165,8 +165,8 @@ public class QueueSender {
             // TODO: write to log the first N bytes of the message
             logger.info(" [x] Sent message ");
             logger.debug("RABBITMQ -> exchangeName: "+exchangeName+
-            		     "  dataType: "+dataType+"  dataSource: "+dataSource+
-            		     "  sensorName: "+sensorName+"  routingKey: "+ routingKey);
+                    "  dataType: "+dataType+"  dataSource: "+dataSource+
+                    "  sensorName: "+sensorName+"  routingKey: "+ routingKey);
             logger.debug("MessageContents: " + new String(messageBytes, "UTF-8"));
 
             // Close the connection/channel

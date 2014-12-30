@@ -36,33 +36,33 @@ public class CollectorFileByLineImpl extends CollectorFileBase implements Runnab
 
     /** Collects the content and sends it to the queue in a message. */
     public void collectInThread() {
-    	if (needToGet(contentFile)) {
-    		// Read the file - line by line
-    		InputStream fileInputStream;
-    		BufferedReader aBufferedReader;
-    		try {
-    			String aLine;
+        if (needToGet(contentFile)) {
+            // Read the file - line by line
+            InputStream fileInputStream;
+            BufferedReader aBufferedReader;
+            try {
+                String aLine;
 
-    			fileInputStream = new FileInputStream(contentFile);
-    			aBufferedReader = new BufferedReader(new InputStreamReader(fileInputStream, Charset.forName("UTF-8")));
-    			while ((aLine = aBufferedReader.readLine()) != null) {
-    				rawContent = aLine.getBytes();
-    				timestamp = new Date();
-    				send();
-    			}
-    			
-    			// Record the file in the metadata database
-    			updateFileMetadataRecord(contentFile);
-    			
-    			clean();
-    			aBufferedReader.close();
-    		} catch (IOException e) {
-    			logger.error("Unable to collect line from '" + contentFile.toString() + "' because of IOException", e);
-    		} finally {
-    			aBufferedReader = null;
-    			fileInputStream = null;
-    		}
-    	}
+                fileInputStream = new FileInputStream(contentFile);
+                aBufferedReader = new BufferedReader(new InputStreamReader(fileInputStream, Charset.forName("UTF-8")));
+                while ((aLine = aBufferedReader.readLine()) != null) {
+                    rawContent = aLine.getBytes();
+                    timestamp = new Date();
+                    send();
+                }
+
+                // Record the file in the metadata database
+                updateFileMetadataRecord(contentFile);
+
+                clean();
+                aBufferedReader.close();
+            } catch (IOException e) {
+                logger.error("Unable to collect line from '" + contentFile.toString() + "' because of IOException", e);
+            } finally {
+                aBufferedReader = null;
+                fileInputStream = null;
+            }
+        }
     }
 
     /**

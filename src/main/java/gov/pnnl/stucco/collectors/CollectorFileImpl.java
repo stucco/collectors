@@ -25,11 +25,11 @@ public class CollectorFileImpl extends CollectorFileBase {
     /** Collects the content and sends it to the queue in a message. */
     @Override
     public void collect() {
-    	if (needToGet(contentFile)) {
-    		collectOnly();
-    		send();
-    		clean();
-    	}
+        if (needToGet(contentFile)) {
+            collectOnly();
+            send();
+            clean();
+        }
     }
 
     /**

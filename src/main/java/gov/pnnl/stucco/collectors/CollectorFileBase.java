@@ -30,34 +30,34 @@ public abstract class CollectorFileBase extends CollectorAbstractBase {
     }
 
     /** Records the collection of a file in our metadata database. */
-	protected void updateFileMetadataRecord(File file) throws IOException {
-		// Get the file's URI and modification date
-		String uri = file.toURI().toString();
-		long modificationTime = file.lastModified();
-		Date modificationDate = new Date(modificationTime);
-		
-		pageMetadata.setTimestamp(uri, modificationDate);
-		pageMetadata.save();
-	}
+    protected void updateFileMetadataRecord(File file) throws IOException {
+        // Get the file's URI and modification date
+        String uri = file.toURI().toString();
+        long modificationTime = file.lastModified();
+        Date modificationDate = new Date(modificationTime);
 
-	/** 
-	 * Checks whether we need to collect a File. We want to collect if the File 
-	 * hasn't been collected before, or if it's been collected but there's a
-	 * newer version there now.
-	 */
-	protected boolean needToGet(File file) {
-		String uri = file.toURI().toString();
-		
-		if (pageMetadata.contains(uri)) {
-			// Check modification date 
-			long metadataModTime = pageMetadata.getTimestamp(uri).getTime();
-			long currentModTime = file.lastModified();
-			return (metadataModTime < currentModTime);
-		}
-		else {
-			// Haven't collected it before
-			return true;
-		}
-	}
+        pageMetadata.setTimestamp(uri, modificationDate);
+        pageMetadata.save();
+    }
+
+    /** 
+     * Checks whether we need to collect a File. We want to collect if the File 
+     * hasn't been collected before, or if it's been collected but there's a
+     * newer version there now.
+     */
+    protected boolean needToGet(File file) {
+        String uri = file.toURI().toString();
+
+        if (pageMetadata.contains(uri)) {
+            // Check modification date 
+            long metadataModTime = pageMetadata.getTimestamp(uri).getTime();
+            long currentModTime = file.lastModified();
+            return (metadataModTime < currentModTime);
+        }
+        else {
+            // Haven't collected it before
+            return true;
+        }
+    }
 
 }

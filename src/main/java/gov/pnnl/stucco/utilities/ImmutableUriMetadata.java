@@ -9,39 +9,39 @@ import java.util.Date;
  * MapDB requires immutable values in the Map.
  */
 public class ImmutableUriMetadata implements Serializable {
-	// For Serializable
-	private static final long serialVersionUID = -6007444375800541775L;
-	
-	// Delegate to the mutable version, so we don't duplicate code.
-	private final MutableUriMetadata delegate;
-    
-    
+    // For Serializable
+    private static final long serialVersionUID = -6007444375800541775L;
+
+    // Delegate to the mutable version, so we don't duplicate code.
+    private final MutableUriMetadata delegate;
+
+
     public ImmutableUriMetadata(MutableUriMetadata original) {
-    	delegate = new MutableUriMetadata(original);
-	}
-    
-	public String getUuid() {
-		String uuid = delegate.getUuid();
+        delegate = new MutableUriMetadata(original);
+    }
+
+    public String getUuid() {
+        String uuid = delegate.getUuid();
         return uuid;
     }
 
-	public String getHash() {
-		String hash = delegate.getHash();
+    public String getHash() {
+        String hash = delegate.getHash();
         return hash;
     }
 
-	public Date getTimestamp() {
-		Date timestamp = delegate.getTimestamp();
+    public Date getTimestamp() {
+        Date timestamp = delegate.getTimestamp();
         return timestamp;
     }
-    
-	public String getETag() {
-		String eTag = delegate.getETag();
+
+    public String getETag() {
+        String eTag = delegate.getETag();
         return eTag;
     }
 
-	public String toString() {
-		String str = delegate.toString();
-		return str;
+    public String toString() {
+        String str = delegate.toString();
+        return str;
     }
 }

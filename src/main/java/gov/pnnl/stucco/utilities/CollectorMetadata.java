@@ -113,10 +113,10 @@ public class CollectorMetadata {
         ImmutableUriMetadata metadata = collectionMap.get(uri);
 
         if (metadata == null) {
-        	return new MutableUriMetadata();
+            return new MutableUriMetadata();
         }
         else {
-        	return new MutableUriMetadata(metadata);
+            return new MutableUriMetadata(metadata);
         }
         
     }

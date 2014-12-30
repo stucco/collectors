@@ -65,7 +65,7 @@ public class Config {
                 // Use config file
                 Yaml yaml = new Yaml();
                 InputStream input = new FileInputStream(configFile);
-				Map<String, Object> yamlConfig = (Map<String, Object>) yaml.load(input);
+                Map<String, Object> yamlConfig = (Map<String, Object>) yaml.load(input);
                 convertYamlObjectsToString(yamlConfig);
                 
                 config = (Map<String, Object>) yamlConfig.get("default");
@@ -117,11 +117,11 @@ public class Config {
                 convertYamlObjectsToString(submap);
             }
             else if (value instanceof List) {
-            	// List, so recursively convert all its items
-            	List<Map<String, Object>> configList = (List<Map<String, Object>>) value;
-            	for (Map<String, Object> submap : configList) {
-          		    convertYamlObjectsToString(submap);
-            	}
+                // List, so recursively convert all its items
+                List<Map<String, Object>> configList = (List<Map<String, Object>>) value;
+                for (Map<String, Object> submap : configList) {
+                    convertYamlObjectsToString(submap);
+                }
             }
             else if (!(value instanceof String) && !(value instanceof List)) {
                 // Convert non-String value to String

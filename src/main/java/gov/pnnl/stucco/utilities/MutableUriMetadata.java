@@ -5,10 +5,10 @@ import java.util.Date;
 
 /** Data class containing the metadata for collection at one URI. */
 public class MutableUriMetadata implements Serializable {
-	// For Serializable
-	private static final long serialVersionUID = 361465469785419709L;
+    // For Serializable
+    private static final long serialVersionUID = 361465469785419709L;
 
-	/** Magic value indicating there is no value. */
+    /** Magic value indicating there is no value. */
     public static final String NONE = "";
 
     /** Timestamp (never null). */
@@ -33,21 +33,21 @@ public class MutableUriMetadata implements Serializable {
     
     /** Creates a mutable copy of an immutable record. */
     public MutableUriMetadata(MutableUriMetadata original) {
-    	timestamp = original.getTimestamp();
-    	uuid = original.getUuid();
-    	eTag = original.getETag();
-    	hash = original.getHash();
-	}
+        timestamp = original.getTimestamp();
+        uuid = original.getUuid();
+        eTag = original.getETag();
+        hash = original.getHash();
+    }
 
     /** Creates a mutable copy of an immutable record. */
     public MutableUriMetadata(ImmutableUriMetadata original) {
-    	timestamp = original.getTimestamp();
-    	uuid = original.getUuid();
-    	eTag = original.getETag();
-    	hash = original.getHash();
-	}
+        timestamp = original.getTimestamp();
+        uuid = original.getUuid();
+        eTag = original.getETag();
+        hash = original.getHash();
+    }
 
-	public void setUuid(String uuid) {
+    public void setUuid(String uuid) {
         this.uuid = uuid;
     }
     
