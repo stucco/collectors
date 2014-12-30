@@ -20,16 +20,16 @@ public class CollectorFileImpl extends CollectorFileBase {
     /** Sets up a sender for a directory. */
     public CollectorFileImpl(Map<String, String> configData) {
         super(configData);
-
-        setFilenameFromConfig(configData);
     }
 
     /** Collects the content and sends it to the queue in a message. */
     @Override
     public void collect() {
-        collectOnly();
-        send();
-        clean();
+    	if (needToGet(contentFile)) {
+    		collectOnly();
+    		send();
+    		clean();
+    	}
     }
 
     /**
@@ -46,6 +46,9 @@ public class CollectorFileImpl extends CollectorFileBase {
             // Read the file
             rawContent = readFile(contentFile);
             timestamp = new Date();
+            
+            // Record it in the metadata database
+            updateFileMetadataRecord(contentFile);
         } catch (IOException e) {
             logger.error("Unable to collect '" + contentFile.toString() + "' because of IOException", e);
         }

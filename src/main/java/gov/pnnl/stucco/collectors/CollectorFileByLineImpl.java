@@ -18,23 +18,13 @@ import org.slf4j.LoggerFactory;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
-public class CollectorFileByLineImpl extends CollectorAbstractBase implements Runnable {
+public class CollectorFileByLineImpl extends CollectorFileBase implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(CollectorFileByLineImpl.class);
 
-    /** file from which we are obtaining content */
-    private File m_filename;
 
     /** Sets up a sender for a directory. */
     public CollectorFileByLineImpl(Map<String, String> configData) {
         super(configData);
-
-        String filename = configData.get("source-URI");
-        File f = new File(filename);
-        if (f.isDirectory()) {
-            throw new IllegalArgumentException(f + "is a directory, not a file");
-        }
-
-        m_filename = f;
     }
 
     /** Collects the content in an independent thread */
@@ -45,29 +35,34 @@ public class CollectorFileByLineImpl extends CollectorAbstractBase implements Ru
     }
 
     /** Collects the content and sends it to the queue in a message. */
-
     public void collectInThread() {
-        // Read the file - line by line
-        InputStream fileInputStream;
-        BufferedReader aBufferedReader;
-        try {
-            String aLine;
+    	if (needToGet(contentFile)) {
+    		// Read the file - line by line
+    		InputStream fileInputStream;
+    		BufferedReader aBufferedReader;
+    		try {
+    			String aLine;
 
-            fileInputStream = new FileInputStream(m_filename);
-            aBufferedReader = new BufferedReader(new InputStreamReader(fileInputStream, Charset.forName("UTF-8")));
-            while ((aLine = aBufferedReader.readLine()) != null) {
-                rawContent = aLine.getBytes();
-                timestamp = new Date();
-                send();
-            }
-            clean();
-            aBufferedReader.close();
-        } catch (IOException e) {
-            logger.error("Unable to collect line from '" + m_filename.toString() + "' because of IOException", e);
-        } finally {
-            aBufferedReader = null;
-            fileInputStream = null;
-        }
+    			fileInputStream = new FileInputStream(contentFile);
+    			aBufferedReader = new BufferedReader(new InputStreamReader(fileInputStream, Charset.forName("UTF-8")));
+    			while ((aLine = aBufferedReader.readLine()) != null) {
+    				rawContent = aLine.getBytes();
+    				timestamp = new Date();
+    				send();
+    			}
+    			
+    			// Record the file in the metadata database
+    			updateFileMetadataRecord(contentFile);
+    			
+    			clean();
+    			aBufferedReader.close();
+    		} catch (IOException e) {
+    			logger.error("Unable to collect line from '" + contentFile.toString() + "' because of IOException", e);
+    		} finally {
+    			aBufferedReader = null;
+    			fileInputStream = null;
+    		}
+    	}
     }
 
     /**

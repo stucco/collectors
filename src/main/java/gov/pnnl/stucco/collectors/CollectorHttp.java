@@ -1,7 +1,6 @@
 package gov.pnnl.stucco.collectors;
 
 import gov.pnnl.stucco.utilities.FeedCollectionStatus;
-import gov.pnnl.stucco.utilities.CollectorMetadata;
 import gov.pnnl.stucco.utilities.MutableUriMetadata;
 
 import java.io.IOException;
@@ -44,9 +43,6 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     
     /** Number of milliseconds to allow for making a connection. */
     private static final int TIMEOUT = 60 * 1000;
-
-    /** Metadata about the pages we've collected. */
-    protected static CollectorMetadata pageMetadata = CollectorMetadata.getInstance();
 
     /** URI from which we are obtaining content*/
     protected String sourceUri;

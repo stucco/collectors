@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import gov.pnnl.stucco.doc_service_client.*;
+import gov.pnnl.stucco.utilities.CollectorMetadata;
 import gov.pnnl.stucco.utilities.UnpackUtils;
 
 import org.slf4j.Logger;
@@ -21,6 +22,9 @@ public abstract class CollectorAbstractBase implements Collector {
     
     /** Configuration key for what post-processing to perform on the byte contents. */
     public static final String POSTPROCESS_KEY = "post-process";
+
+	/** Metadata about the pages we've collected. */
+	protected static final CollectorMetadata pageMetadata = CollectorMetadata.getInstance();
     
     
     /** Metadata for inclusion in the RabbitMQ header. */
