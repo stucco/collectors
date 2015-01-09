@@ -26,9 +26,12 @@ public class CollectorFileImpl extends CollectorFileBase {
     @Override
     public void collect() {
         if (needToGet(contentFile)) {
+            logger.info("Collecting: " + contentFile.toURI());
             collectOnly();
             send();
             clean();
+        } else {
+            logger.info("Collection not required: " + contentFile.toURI());
         }
     }
 
@@ -50,13 +53,14 @@ public class CollectorFileImpl extends CollectorFileBase {
             // Record it in the metadata database
             updateFileMetadataRecord(contentFile);
         } catch (IOException e) {
-            logger.error("Unable to collect '" + contentFile.toString() + "' because of IOException", e);
+            logger.error("Unable to collect '" + contentFile.toURI() + "' because of IOException", e);
         }
     }
 
     /** Reads the contents of a file. */
     public byte[] readFile(File file) throws IOException {
         int byteCount = (int) file.length();
+        logger.debug(String.format("File size: %s for: %s",byteCount,file.toURI()));
         byte[] content = new byte[byteCount];
         DataInputStream in = new DataInputStream((new FileInputStream(file)));
         in.readFully(content);

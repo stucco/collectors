@@ -2,18 +2,24 @@ package gov.pnnl.stucco.collectors;
 
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
 public class CollectorFactory {
+    // get the instance of the global logger
+    private static final Logger logger = LoggerFactory.getLogger(CollectorFactory.class);
     
     // simple factory approach, will probably want to redo this as we include more collector types
     /* 
      * @param configData  Configuration data specific to a given collector
      */
     public static Collector makeCollector(Map<String, String> configData) {
-        String collectorType = configData.get("type");     
+        String collectorType = configData.get("type");
+        logger.debug("Creating collector: " + collectorType);
         switch (collectorType.toUpperCase()) {
             case "WEB":
                 return new CollectorWebPageImpl(configData);
@@ -24,17 +30,8 @@ public class CollectorFactory {
             case "FILEBYLINE":
                 return new CollectorFileByLineImpl(configData);
                 
-            case "DIRECTORY":
-                return new CollectorDirectoryImpl(configData);
-                
             case "RSS":
                 return new CollectorRssImpl(configData);
-                
-            case "BUGTRAQ":
-                return new CollectorBugtraqVulnerabilities(configData);
-                
-            case "SOPHOS":
-                return new CollectorSophosEntry(configData);
             
             case "NVD":
                 return new CollectorNVDPageImpl(configData);

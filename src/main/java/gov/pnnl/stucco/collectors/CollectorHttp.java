@@ -246,6 +246,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                 case HttpURLConnection.HTTP_MOVED_TEMP:
                 case HttpURLConnection.HTTP_SEE_OTHER:
                     String url = connection.getHeaderField("Location");
+                    logger.info("Redirect response: {} -> {}", this.sourceUri, url);
                     connection = makeRequest(httpRequestMethod, url, maxRedirectCount - 1);
                     break;
 
@@ -390,7 +391,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     }
 
     /** Parses the entry URLs from the page content. */
-    protected List<String> scrapeUrls(String regEx) {
+    protected List<String> scrapeUrls(String currentUrl, String regEx) {
         List<String> urlList = new ArrayList<String>();
     
         try {
@@ -401,7 +402,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
             Pattern pattern = Pattern.compile(regEx);
             Matcher matcher = pattern.matcher(page);
     
-            URI source = new URI(sourceUri);
+            URI source = new URI(currentUrl);
             
             // For each match of the regex
             while (matcher.find()) {
@@ -417,6 +418,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
                 }
             }
         } catch (URISyntaxException e) {
+            logger.warn("Bad URI: {}", sourceUri);
             e.printStackTrace();
         }
         
@@ -444,6 +446,7 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
     protected void collectAndAggregateUrls(List<String> urls) {
         // Start the entry message
         StringBuilder messageBuffer = new StringBuilder();
+        logger.debug("Packaging multiple URLs for transport");
         
         // For each tab
         for (String url : urls) {
@@ -478,7 +481,8 @@ public abstract class CollectorHttp extends CollectorAbstractBase {
 
     /**
      * Gets a Collector suitable for an entry from an RSS (or other) feed.  
-     * The collector type tries to has tabbed subpages.
+     * This determines if the entry has tabbed subpages based on whether 
+     * a tab regex exists.
      */
     protected Collector getEntryCollector(String entryUrl) {
         collectorConfigData.put(SOURCE_URI, entryUrl);

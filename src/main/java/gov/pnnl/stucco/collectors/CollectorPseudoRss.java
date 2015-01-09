@@ -8,12 +8,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Collector for gathering a sequence of pages that list entries, 
  * similar to an RSS feed.
  */
 public class CollectorPseudoRss extends CollectorWebPageImpl {
+    protected static final Logger logger = LoggerFactory.getLogger(CollectorPseudoRss.class);
 
     // Config keys
     public static final String ENTRY_REGEX_KEY = "entry-regex";
@@ -37,8 +41,13 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
     @Override
     public void collect() {
         try {
+            logger.info("Collecting pseudo-RSS feed: {}", sourceUri);
+
             // See if we want everything, otherwise we want new content only
             boolean getEverything = isForcedCollection();
+            if (getEverything) {
+                logger.info("Performing forced collection: {}", sourceUri);
+            }
             
             String pageUrl = sourceUri;
             while (pageUrl != null) {
@@ -54,7 +63,7 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
                         FeedCollectionStatus status = getCollectionStatus();
                         if (status == FeedCollectionStatus.GO) {
                             // OK so far; check for next page
-                            nextPageUrl = getNextPageUrl();
+                            nextPageUrl = getNextPageUrl(pageUrl);
                         }
                     }
                 }
@@ -80,16 +89,18 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
         // Get the regex for finding entry URLs
         String entryRegEx = collectorConfigData.get(ENTRY_REGEX_KEY);
         if (entryRegEx == null) {
+            logger.error("Not collecting entries from {} because missing entry regex key {} in config", pageUrl, ENTRY_REGEX_KEY);
+
             // There was no regex, so we can't collect
             setCollectionStatus(FeedCollectionStatus.STOP_INVALID);
             return;
         }
         
         // Scrape the entry URLs from the listing
-        List<String> entryList = scrapeUrls(entryRegEx);
+        List<String> entryList = scrapeUrls(pageUrl, entryRegEx);
         
         // Collect the entries
-        collectEntries(entryList);
+        collectEntries(pageUrl, entryList);
     }
     
     
@@ -98,8 +109,10 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
      * 
      * <p> Sets feed collection status if a stop condition is detected.
      */
-    private void collectEntries(List<String> entryUrls) {
+    private void collectEntries(String pageUrl, List<String> entryUrls) {
         if (entryUrls.isEmpty()) {
+            logger.warn("No entry URLs were found in scraping listing page {}. Please check regex for key {}.", pageUrl, ENTRY_REGEX_KEY);
+            
             // We got no entries, so it's probably pointless to try additional pages
             setCollectionStatus(FeedCollectionStatus.STOP_EMPTY);
             return;
@@ -119,6 +132,7 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
 
             if (checkForDuplicates  &&  pageMetadata.contains(entryUrl)) {
                 // We were looking for only new entries, but found an old one
+                logger.info("Stopping entry collection for {}, found previously collected URL {}", pageUrl, entryUrl);
                 setCollectionStatus(FeedCollectionStatus.STOP_DUPLICATE);
                 return;
             }
@@ -130,21 +144,27 @@ public class CollectorPseudoRss extends CollectorWebPageImpl {
         
         if (entryCount >= maxEntries) {
             // We reached our limit on how much to collect
+            logger.info("Stopping entry collection for {}, collected specified maximum {}", pageUrl, maxEntries);
             setCollectionStatus(FeedCollectionStatus.STOP_MAXED);
         }
     }
 
-    /** Scrapes the URL for the next page.*/
-    private String getNextPageUrl() {
+    /** Scrapes the URL for the next page.
+     * @param currentUrl TODO*/
+    private String getNextPageUrl(String currentUrl) {
         // Default value if we can't or shouldn't continue
         String nextPageUrl = null;
         
         // Try scraping a regex to get the URL for the next page
         String nextPageRegEx = collectorConfigData.get(NEXT_PAGE_REGEX_KEY);
         if (nextPageRegEx != null) {
-            List<String> nextPageList = scrapeUrls(nextPageRegEx);
-            if (!nextPageList.isEmpty()) {
+            List<String> nextPageList = scrapeUrls(currentUrl, nextPageRegEx);
+            if (nextPageList.isEmpty()) {
+                logger.info("Scraping {} could not find a next page URL", currentUrl);
+            }
+            else {
                 nextPageUrl = nextPageList.get(0);
+                logger.info("Scraping {} found next page URL: {}", currentUrl, nextPageUrl);
             }
         }
         

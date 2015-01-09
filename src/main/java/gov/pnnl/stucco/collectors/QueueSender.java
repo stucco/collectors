@@ -162,12 +162,17 @@ public class QueueSender {
             // Send the file as a message
             channel.basicPublish(exchangeName, routingKey, builder.build(), messageBytes);
 
-            // TODO: write to log the first N bytes of the message
-            logger.info(" [x] Sent message ");
+            // write to log the first N bytes of the message
+            int messSize = Math.min(messageBytes.length, 100); 
+            String messageSubString = new String(messageBytes, 0, messSize, "UTF-8");
+            if (messageBytes.length > 100) {
+                messageSubString += "...";
+            }
+            logger.info("Sent message for: {}, {}",dataSource, messageSubString);
+            
             logger.debug("RABBITMQ -> exchangeName: "+exchangeName+
-                    "  dataType: "+dataType+"  dataSource: "+dataSource+
+                    "  dataType: "+dataType+
                     "  sensorName: "+sensorName+"  routingKey: "+ routingKey);
-            logger.debug("MessageContents: " + new String(messageBytes, "UTF-8"));
 
             // Close the connection/channel
             channel.close();
