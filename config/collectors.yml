@@ -18,7 +18,12 @@ default:
       logs:
         dir: logs
         level: info
-  demo-load:
+###############################################################################
+#
+#   DEMO ENVIRONMENT
+#
+###############################################################################
+  demo:
     collectors:
 #
 #     Endogenous Content
@@ -337,6 +342,11 @@ default:
 #        now-collect: new 
     outputLog : ./demo.log
     outputDir : ./data/Receive
+###############################################################################
+#
+# PRODUCTION ENVIRONMENT
+#
+###############################################################################
   production:
     collectors:
 #
