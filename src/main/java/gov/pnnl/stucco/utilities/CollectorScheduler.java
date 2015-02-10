@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CollectorScheduler {
     @SuppressWarnings({ "unchecked" })
-    private void runSchedule(Map<String, Object> collectorsSectionConfig) {
+    public void runSchedule(Map<String, Object> collectorsSectionConfig) {
         try {
             Logger log = LoggerFactory.getLogger(CollectorScheduler.class);
             
