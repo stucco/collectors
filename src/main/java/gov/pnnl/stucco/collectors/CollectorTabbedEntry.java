@@ -24,6 +24,8 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
     @Override
     public void collect() {
         try {
+            logger.info("Collecting tabbed entry page {}", sourceUri);
+            
             boolean getEverything = isForcedCollection();
             
             if (getEverything || needToGet(sourceUri)) {
@@ -39,7 +41,7 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
                     
                     // Scrape the tab URLs from the listing
                     String tabRegEx = collectorConfigData.get(TAB_REGEX_KEY);
-                    List<String> urlList = scrapeUrls(tabRegEx);
+                    List<String> urlList = scrapeUrls(sourceUri, tabRegEx);
                     
                     // Collect the tabs and send a single message about them
                     collectAndAggregateUrls(urlList);

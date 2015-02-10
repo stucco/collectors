@@ -37,6 +37,9 @@ public class CollectorRssImpl extends CollectorHttp {
             
             // See if we want everything, otherwise we want new content only
             boolean getEverything = isForcedCollection();
+            if (getEverything) {
+                logger.info("Performing forced collection: {}", sourceUri);
+            }
             
             if (getEverything || needToGet(sourceUri)) {
                 obtainFeed(sourceUri);
@@ -76,6 +79,7 @@ public class CollectorRssImpl extends CollectorHttp {
             
             boolean getPages = isNewContent || isForcedCollection();
             if (getPages) {
+                logger.info("Obtaining pages from RSS feed {}", url);
                 // Get the pages
                 obtainFeedPages(feed, sourceName);
 

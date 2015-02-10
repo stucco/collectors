@@ -125,6 +125,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
             String endUri = connection.getURL().toExternalForm();
             if (!uri.equalsIgnoreCase(endUri)) {
                 // We got redirected, so save metadata for the end URL too
+                logger.info("Redirection occurred {} -> {}", uri, endUri);
                 updatePageMetadata(endUri, timestamp, eTag, checksum);
             }
             pageMetadata.save();
@@ -156,7 +157,11 @@ public class CollectorWebPageImpl extends CollectorHttp {
         if (isNewContent) {
             assignDocId();
             pageMetadata.setUuid(url, docId);
+        } else {
+            // since this url has not changed we need to get the old UUID for it
+            docId = pageMetadata.getUuid(url);
         }
+        logger.info("URL: {}  docID: {}", url, docId);
         return isNewContent;
     }
 

@@ -68,7 +68,7 @@ public abstract class CollectorAbstractBase implements Collector {
             // we create a delegate for queueSender
             messageSender.setDocService(docServiceClient);
         } catch (DocServiceException e) {
-            logger.error("Could instantiate document-service client", e);
+            logger.error("Couldn't instantiate document-service client", e);
         }
     }
 
@@ -84,6 +84,7 @@ public abstract class CollectorAbstractBase implements Collector {
         // we're only allow the number of threads to be between 1 and 8 (at this time)
         if (threadCount > 0 && threadCount < 9) {
             numberOfThreads = threadCount;
+            logger.debug("Resetting number of threads to: " + numberOfThreads);
         }
     }
 
@@ -102,6 +103,7 @@ public abstract class CollectorAbstractBase implements Collector {
     public byte[] postProcess(String directive, byte[] content) throws IOException {
         byte[] result;
         if (directive != null) {
+            logger.info("post processing content, directive: " + directive);
             switch (directive) {
                 case "unzip":
                     result = UnpackUtils.unCompress(content);

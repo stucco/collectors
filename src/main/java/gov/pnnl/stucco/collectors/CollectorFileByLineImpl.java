@@ -37,6 +37,8 @@ public class CollectorFileByLineImpl extends CollectorFileBase implements Runnab
     /** Collects the content and sends it to the queue in a message. */
     public void collectInThread() {
         if (needToGet(contentFile)) {
+            logger.info("Collecting File by Line: " + contentFile.toURI());
+            
             // Read the file - line by line
             InputStream fileInputStream;
             BufferedReader aBufferedReader;
@@ -62,6 +64,8 @@ public class CollectorFileByLineImpl extends CollectorFileBase implements Runnab
                 aBufferedReader = null;
                 fileInputStream = null;
             }
+        } else {
+            logger.info("Collection not required: " + contentFile.toURI());
         }
     }
 

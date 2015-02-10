@@ -5,10 +5,14 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /** Base class for collectors reading directly from file. */
 public abstract class CollectorFileBase extends CollectorAbstractBase {
-
+    private static final Logger logger = LoggerFactory.getLogger(CollectorFileBase.class);
+    
     /** file from which we are obtaining content */
     protected File contentFile;
 
@@ -52,10 +56,19 @@ public abstract class CollectorFileBase extends CollectorAbstractBase {
             // Check modification date 
             long metadataModTime = pageMetadata.getTimestamp(uri).getTime();
             long currentModTime = file.lastModified();
-            return (metadataModTime < currentModTime);
+            boolean isModified = (metadataModTime < currentModTime);
+            logger.debug("URI: " + uri + "  Last time seen:" + metadataModTime + " CurrentTime: " + currentModTime);
+            if(isModified ){
+                logger.info("Modification date has changed for: " + uri);
+            } else {
+                logger.info("Modification date is unchanged for: " + uri);
+            }
+            
+            return isModified;
         }
         else {
             // Haven't collected it before
+            logger.info("New URI: " + uri);
             return true;
         }
     }

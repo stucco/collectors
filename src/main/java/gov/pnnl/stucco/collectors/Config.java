@@ -55,6 +55,8 @@ public class Config {
     private Config() {
     }
     
+    // TODO: add logging that would dump entire configuration entries
+    
     /** 
      * Loads the configuration, either from file, URL, or environment variables,
      * in that order of preference.
@@ -69,6 +71,7 @@ public class Config {
                 convertYamlObjectsToString(yamlConfig);
                 
                 config = (Map<String, Object>) yamlConfig.get("default");
+                logger.info("Using configuration from file: {}", configFile);
             }
             else {
                 if (configUrl == null) {
@@ -90,6 +93,8 @@ public class Config {
                 // Use config service
                 StuccoClient client = new StuccoClientImpl(configUrl);
                 config = client.listNested("/");
+                logger.info("Using configuration from file: {}", configUrl);
+
             }
             config = StuccoJetcdUtil.trimKeyPaths(config);
         } 

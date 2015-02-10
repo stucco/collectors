@@ -46,6 +46,7 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
             if (uriScheme.equalsIgnoreCase("file")) {
                 obtainFromFile(uriPath);
                 // Post-process if requested
+                logger.info("Processing NVD file: {}", uriPath);
                 String directive = collectorConfigData.get(POSTPROCESS_KEY);
                 rawContent = postProcess(directive, rawContent);
                 processMultiRecords();
@@ -53,6 +54,7 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
             else if (needToGet(sourceUri)) {
                 if (obtainWebPage(sourceUri)) {
                     // Post-process if requested
+                    logger.info("Processing NVD : {}", sourceUri);
                     String directive = collectorConfigData.get(POSTPROCESS_KEY);
                     rawContent = postProcess(directive, rawContent);
                     processMultiRecords();
@@ -85,7 +87,7 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
             }
         } );
         
-        logger.info("Processing into single records");
+        logger.info("Processing NVD into single records");
         InputStream input = new ByteArrayInputStream(rawContent);
         extractor.parseForRecords(input);
     }
@@ -104,7 +106,7 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
             clean(); 
         }
         catch (DocServiceException e) {
-            logger.error("Cannot send data", e);
+            logger.error("Cannot store data", e);
         }
     }
         
@@ -115,6 +117,7 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
      */
     private byte[] obtainFromFile(String filename) {
         try {
+            logger.info("Collecting NVD from file: {}", filename);
             File contentFile = new File(filename);
             if (contentFile.isDirectory()) {
                 logger.error(contentFile + "is a directory, not a file");
@@ -136,6 +139,7 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
      * */
     private byte[] readFile(File file) throws IOException {
         int byteCount = (int) file.length();
+        logger.debug("Size of NVD file: {}", byteCount);
         byte[] content = new byte[byteCount];
         DataInputStream in = new DataInputStream((new FileInputStream(file)));
         in.readFully(content);
