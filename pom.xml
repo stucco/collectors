@@ -157,6 +157,18 @@
 							<goal>one-jar</goal>
 						</goals>
 					</execution>
+					<execution>
+						<id>build-forth</id>
+						<configuration>
+							<mainClass>gov.pnnl.stucco.utilities.CollectionDriver</mainClass>
+							<attachToBuild>true</attachToBuild>
+							<classifier>onejar</classifier>
+							<filename>collect.jar</filename>
+						</configuration>
+						<goals>
+							<goal>one-jar</goal>
+						</goals>
+					</execution>
 				</executions>
 			</plugin>
 			<plugin>
