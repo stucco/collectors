@@ -213,7 +213,7 @@ default:
         entry-regex: 'href="(/bid/\d+)"'
         tab-regex: 'href="(/bid/\d+/(info|discuss|exploit|solution|references))"'
 #        next-page-regex: 'href="(/cgi-bin/index\.cgi\?o[^"]+)">Next &gt;<'
-        now-collect: all 
+        now-collect: new 
         cron: 0 45 * * * ?  # collect every hour
       -
         type: RSS
@@ -493,7 +493,7 @@ default:
         entry-regex: 'href="(/bid/\d+)"'
         tab-regex: 'href="(/bid/\d+/(info|discuss|exploit|solution|references))"'
 #        next-page-regex: 'href="(/cgi-bin/index\.cgi\?o[^"]+)">Next &gt;<'
-        now-collect: all 
+        now-collect: new 
         cron: 0 45 * * * ?  # collect every hour
       -
         type: RSS
