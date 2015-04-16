@@ -1,8 +1,6 @@
 package gov.pnnl.stucco.collectors;
 
 import java.io.BufferedReader;
-import java.io.DataInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * $OPEN_SOURCE_DISCLAIMER$
  */
 
-public class CollectorFileByLineImpl extends CollectorFileBase implements Runnable {
+public class CollectorFileByLineImpl extends CollectorFileBase {
     private static final Logger logger = LoggerFactory.getLogger(CollectorFileByLineImpl.class);
 
 
@@ -27,15 +25,8 @@ public class CollectorFileByLineImpl extends CollectorFileBase implements Runnab
         super(configData);
     }
 
-    /** Collects the content in an independent thread */
-    @Override
-    public void collect() {
-        Thread t = new Thread(this);
-        t.start();
-    }
-
     /** Collects the content and sends it to the queue in a message. */
-    public void collectInThread() {
+    public void collect() {
         if (needToGet(contentFile)) {
             logger.info("Collecting File by Line: " + contentFile.toURI());
             
@@ -80,11 +71,6 @@ public class CollectorFileByLineImpl extends CollectorFileBase implements Runnab
     @Override
     public void clean() {
         rawContent = null;
-    }
-
-    @Override
-    public void run() {
-        collectInThread();
     }
 
 }

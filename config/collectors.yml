@@ -155,105 +155,6 @@ default:
         data-type: structured
         source-name: nvd
         post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2002.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 20 ? * 5  # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2003.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 21 ? * 5  # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2004.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 10 ? * 5   # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2005.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 11 ? * 5  # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2006.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 30 11 ? * 5  # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2007.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 12 ? * 5   # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2008.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 13 ? * 5   # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2009.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 14 ? * 5   # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2010.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 15 ? * 5   # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2011.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 16 ? * 5   # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
-        source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2012.xml.gz
-        content-type : text/xml
-        now-collect: new 
-        cron: 0 0 17 ? * 5   # collect on Friday
-      -
-        type: NVD
-        data-type: structured
-        source-name: nvd
-        post-process: unzip
         source-URI: https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2013.xml.gz
         content-type : text/xml
         now-collect: new 
@@ -312,7 +213,7 @@ default:
         entry-regex: 'href="(/bid/\d+)"'
         tab-regex: 'href="(/bid/\d+/(info|discuss|exploit|solution|references))"'
 #        next-page-regex: 'href="(/cgi-bin/index\.cgi\?o[^"]+)">Next &gt;<'
-        now-collect: all 
+        now-collect: new 
         cron: 0 45 * * * ?  # collect every hour
       -
         type: RSS
@@ -592,7 +493,7 @@ default:
         entry-regex: 'href="(/bid/\d+)"'
         tab-regex: 'href="(/bid/\d+/(info|discuss|exploit|solution|references))"'
 #        next-page-regex: 'href="(/cgi-bin/index\.cgi\?o[^"]+)">Next &gt;<'
-        now-collect: all 
+        now-collect: new 
         cron: 0 45 * * * ?  # collect every hour
       -
         type: RSS

@@ -144,6 +144,9 @@ public class QueueSender {
                 factory.setPassword(password);
             }
  
+            // Automatically try to reconnect to rabbit
+            factory.setAutomaticRecoveryEnabled(true);
+
             Connection connection = factory.newConnection();
 
             // Set up the channel with exchange and queue
