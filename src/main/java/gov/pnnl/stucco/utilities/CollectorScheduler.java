@@ -160,20 +160,15 @@ public class CollectorScheduler {
             
             CommandLine parser = new CommandLine();
             parser.add1("-file");
-            parser.add1("-url");
             parser.add1("-section");
             parser.parse(args);
             
-            if (parser.found("-file")  &&  parser.found("-url")) {
-                throw new UsageException("Can't specify both file and URL");
-            }
-            else if (parser.found("-file")) {
+            if (parser.found("-file")) {
                 String configFilename = parser.getValue();
                 Config.setConfigFile(new File(configFilename));
             }
-            else if (parser.found("-url")) {
-                String configUrl = parser.getValue();
-                Config.setConfigUrl(configUrl);
+            else {
+                throw new UsageException("-file switch is required");
             }
             
             String section = "scheduler";
@@ -203,7 +198,7 @@ public class CollectorScheduler {
             scheduler.runSchedule(sectionMap);
         } 
         catch (UsageException e) {
-            System.err.println("Usage: CollectorScheduler (-file configFile | -url configUrl) [-section section]");
+            System.err.println("Usage: CollectorScheduler -file configFile [-section section]");
             System.exit(1);
         }
     }

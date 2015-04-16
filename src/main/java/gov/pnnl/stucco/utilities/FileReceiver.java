@@ -257,19 +257,15 @@ public class FileReceiver {
         try {
             CommandLine parser = new CommandLine();
             parser.add1("-file");
-            parser.add1("-url");
             parser.parse(args);
 
-            if (parser.found("-file") && parser.found("-url")) {
-                throw new CommandLine.UsageException("Can't specify both file and URL");
-            } else if (parser.found("-file")) {
+            if (parser.found("-file")) {
                 // Set up config to be from file
                 String configFilename = parser.getValue();
                 Config.setConfigFile(new File(configFilename));
-            } else if (parser.found("-url")) {
-                // Set up config to be from service
-                String configUrl = parser.getValue();
-                Config.setConfigUrl(configUrl);
+            }
+            else {
+                throw new CommandLine.UsageException("-file switch is required");
             }
 
             // Receive content. Uses config, so must be done after config source
@@ -278,7 +274,7 @@ public class FileReceiver {
             FileReceiver receiver = new FileReceiver(receiveDir);
             receiver.receive();
         } catch (CommandLine.UsageException e) {
-            System.err.println("Usage: FileReceiver (-file configFile | -url configUrl)");
+            System.err.println("Usage: FileReceiver -file configFile");
             System.exit(1);
         }
     }

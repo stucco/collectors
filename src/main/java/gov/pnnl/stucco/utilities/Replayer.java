@@ -36,7 +36,7 @@ public class Replayer {
      * The master configuration map
      * 
      * @param section
-     * The section within the map, either "replayer-file" or "replayer-web"
+     * The section within the map
      */
     @SuppressWarnings("unchecked")
     Replayer( Map<String, Object> configData, String section)
@@ -71,20 +71,15 @@ public class Replayer {
         try {
             CommandLine parser = new CommandLine();
             parser.add1("-file");
-            parser.add1("-url");
             parser.add1("-section");
             parser.parse(args);
             
-            if (parser.found("-file")  &&  parser.found("-url")) {
-                throw new UsageException("Can't specify both file and URL");
-            }
-            else if (parser.found("-file")) {
+            if (parser.found("-file")) {
                 String configFilename = parser.getValue();
                 Config.setConfigFile(new File(configFilename));
             }
-            else if (parser.found("-url")) {
-                String configUrl = parser.getValue();
-                Config.setConfigUrl(configUrl);
+            else {
+                throw new UsageException("-file switch is required");
             }
             
             String section = "replayer-file";
@@ -100,7 +95,7 @@ public class Replayer {
             replay.play();
         } 
         catch (UsageException e) {
-            System.err.println("Usage: Replayer -section ('replayer-web' | 'replayer-file') (-file configFile | -url configUrl)");
+            System.err.println("Usage: Replayer -file configFile [-section configSection]");
             System.exit(1);
         }
     }
