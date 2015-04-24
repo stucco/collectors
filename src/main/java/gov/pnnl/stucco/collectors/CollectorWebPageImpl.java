@@ -6,6 +6,7 @@ package gov.pnnl.stucco.collectors;
 
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
 import gov.pnnl.stucco.doc_service_client.DocumentObject;
+import gov.pnnl.stucco.utilities.Exit;
 import gov.pnnl.stucco.utilities.FeedCollectionStatus;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
 
@@ -65,6 +66,7 @@ public class CollectorWebPageImpl extends CollectorHttp {
         } 
         catch (DocServiceException e) {
             logger.error("DocServiceException for URI: " + sourceUri, e);
+            Exit.exit(1);
         }
     }
     

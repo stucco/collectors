@@ -60,6 +60,7 @@ public class FileReceiver {
             docServiceClient = new DocServiceClient(docServiceConfig);
         } catch (DocServiceException e) {
             e.printStackTrace();
+            Exit.exit(1);
         }
     }
 
