@@ -184,6 +184,7 @@ public class QueueSender {
             connection.close();
         } catch (IOException e) {
             logger.error("Error sending data though message queue", e);
+            Exit.exit(2);
         }
     }
 
