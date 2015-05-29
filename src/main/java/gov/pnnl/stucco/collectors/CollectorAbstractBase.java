@@ -9,6 +9,7 @@ import java.util.Map;
 
 import gov.pnnl.stucco.doc_service_client.*;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
+import gov.pnnl.stucco.utilities.Exit;
 import gov.pnnl.stucco.utilities.UnpackUtils;
 import gov.pnnl.stucco.utilities.TextExtractor;
 
@@ -74,6 +75,7 @@ public abstract class CollectorAbstractBase implements Collector {
             messageSender.setDocService(docServiceClient);
         } catch (DocServiceException e) {
             logger.error("Couldn't instantiate document-service client", e);
+            Exit.exit(1);
         }
     }
 

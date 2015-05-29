@@ -1,6 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
+import gov.pnnl.stucco.utilities.Exit;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,6 +55,7 @@ public class CollectorTabbedEntry extends CollectorWebPageImpl {
         }
         catch (DocServiceException e) {
             logger.error("Cannot send data", e);
+            Exit.exit(1);
         }
     }
 

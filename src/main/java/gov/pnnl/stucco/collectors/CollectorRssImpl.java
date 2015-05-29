@@ -195,11 +195,11 @@ public class CollectorRssImpl extends CollectorHttp {
 //            String url = "https://blog.damballa.com/feed";                             // 403 Forbidden
 //            String url = "https://evilzone.org/.xml/?type=rss";                        // SSLHandshakeException
 //            String url = "http://rss.packetstormsecurity.com/files/";                  // OK: HEAD Last-Modified
-            String url = "http://www.sophos.com/en-us/rss/threats/latest-viruses.xml";
+            String url = "https://www.sophos.com/en-us/rss/threats/latest-viruses.xml";
             
             String tabRegEx = "href=\"(http://www.sophos.com/\\S*[.]aspx)\">(Summary|More information)";
             
-            Config.setConfigFile(new File("../config/stucco.yml"));
+            Config.setConfigFile(new File("config/collectors.yml"));
             Map<String, String> configData = new HashMap<String, String>();
             configData.put("type", "RSS");
             configData.put("data-type", "structured");

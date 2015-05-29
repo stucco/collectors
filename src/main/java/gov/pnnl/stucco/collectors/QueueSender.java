@@ -5,6 +5,7 @@ package gov.pnnl.stucco.collectors;
  */
 import gov.pnnl.stucco.doc_service_client.DocServiceClient;
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
+import gov.pnnl.stucco.utilities.Exit;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -63,6 +64,7 @@ public class QueueSender {
             }
         } catch (DocServiceException e) {
             logger.error("Cannot send data", e);
+            Exit.exit(1);
         }
     }
 
@@ -182,6 +184,7 @@ public class QueueSender {
             connection.close();
         } catch (IOException e) {
             logger.error("Error sending data though message queue", e);
+            Exit.exit(2);
         }
     }
 
