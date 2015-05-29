@@ -68,6 +68,9 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
         catch (IOException e) {
             logger.error("Exception raised while reading web page: " + sourceUri, e);
         } 
+        catch (PostProcessingException e) {
+            logger.error("Exception raised while post-processing web page: " + sourceUri, e);
+        } 
     }
 
     /**

@@ -65,6 +65,9 @@ public class CollectorWebPageImpl extends CollectorHttp {
         } 
         catch (DocServiceException e) {
             logger.error("DocServiceException for URI: " + sourceUri, e);
+        } 
+        catch (PostProcessingException e) {
+            logger.error("Exception raised while post-processing web page: " + sourceUri, e);
         }
     }
     

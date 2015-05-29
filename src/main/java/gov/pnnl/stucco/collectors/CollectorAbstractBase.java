@@ -1,6 +1,8 @@
 package gov.pnnl.stucco.collectors;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -8,6 +10,7 @@ import java.util.Map;
 import gov.pnnl.stucco.doc_service_client.*;
 import gov.pnnl.stucco.utilities.CollectorMetadata;
 import gov.pnnl.stucco.utilities.UnpackUtils;
+import gov.pnnl.stucco.utilities.TextExtractor;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +49,8 @@ public abstract class CollectorAbstractBase implements Collector {
     
     /** Map of configuration data for the specific collector. */
     protected Map<String, String> collectorConfigData;
+    
+    protected TextExtractor textExtractor = new TextExtractor();
 
 
     protected CollectorAbstractBase(Map<String, String> configData) {
@@ -100,7 +105,7 @@ public abstract class CollectorAbstractBase implements Collector {
      * 
      * @throws IOException
      */
-    public byte[] postProcess(String directive, byte[] content) throws IOException {
+    public byte[] postProcess(String directive, byte[] content) throws IOException, PostProcessingException {
         byte[] result;
         if (directive != null) {
             logger.info("post processing content, directive: " + directive);
@@ -111,6 +116,12 @@ public abstract class CollectorAbstractBase implements Collector {
                     
                 case "tar-unzip":
                     result = UnpackUtils.unTarGzip(content);
+                    break;
+                    
+                case "removeHTML" :
+                    // uses TIKA to remove the markup to give us just text and any metadata found
+                    InputStream is = new ByteArrayInputStream(content);
+                    result = textExtractor.parseHTML(is).getBytes();
                     break;
                 
                 default:
