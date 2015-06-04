@@ -34,6 +34,9 @@ public abstract class CollectorAbstractBase implements Collector {
     /** Metadata for inclusion in the RabbitMQ header. */
     protected final Map<String, String> messageMetadata = new HashMap<String, String>();
     
+    /** Metadata for inclusion in the document store message. */
+    protected Map<String, String> documentMetadata = new HashMap<String, String>();
+    
     /** Delegate used to send RabbitMQ messages. */
     protected final QueueSender messageSender = new QueueSender();
     
@@ -123,7 +126,15 @@ public abstract class CollectorAbstractBase implements Collector {
                 case "removeHTML" :
                     // uses TIKA to remove the markup to give us just text and any metadata found
                     InputStream is = new ByteArrayInputStream(content);
-                    result = textExtractor.parseHTML(is).getBytes();
+                    Map<String, String> dataMap = textExtractor.parseHTML(is);
+                    
+                    // Remove the content and use it as the result
+                    String contentStr = dataMap.remove("content");
+                    result = contentStr.getBytes();
+                    
+                    // The rest gets saved as metadata
+                    documentMetadata = dataMap;
+                    
                     break;
                 
                 default:

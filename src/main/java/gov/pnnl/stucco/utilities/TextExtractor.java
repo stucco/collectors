@@ -7,6 +7,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -60,20 +63,46 @@ public class TextExtractor {
     }
     
     /**
+     * Puts the metadata and extracted text content into a Map.
+     * The document uses the names that TIKA defines for the key value pairs in 
+     * the metadata structure and this method adds the "content" key and the 
+     * value from the content.
+     * 
+     * @param content - text extracted (or filtered) from the document
+     * @param metadata - A map of extracted metadata from the document (author, title, pubdate) as found in the document
+     * @return Map containing metadata and content
+     */
+    private Map<String, String> createMap(String content, Metadata metadata)
+    {
+        Map<String, String> dataMap = new HashMap<String, String>();
+        dataMap.put("content", content);
+        
+        String[] names = metadata.names();
+        for (String name : names) {
+            String[] value = metadata.getValues(name);
+            if (value.length > 0) {
+                dataMap.put(name, value[0]);
+            }
+        }
+        
+        return dataMap;
+    }
+    
+    /**
      * Parses an HTML document and filters all the HTML markup out and returns metadata that was found in the document
      * 
      * @param is - the input stream containing the document
-     * @return - a JSONString representing the document and metadata
+     * @return - a Map representing the document and metadata
      * @throws PostProcessingException  if TIKA fails for whatever reason
      */
-    public String parseHTML(InputStream is) throws PostProcessingException {
-        String rtnValue = "";
+    public Map<String, String> parseHTML(InputStream is) throws PostProcessingException {
+        Map<String, String> rtnValue = Collections.emptyMap();
         try {
             ContentHandler contenthandler = new BodyContentHandler();
             Metadata metadata = new Metadata();
             Parser parser = new AutoDetectParser();
             parser.parse(is, contenthandler, metadata, new ParseContext());
-            rtnValue = createJSONObject(contenthandler.toString(), metadata);     
+            rtnValue = createMap(contenthandler.toString(), metadata);     
         }
         catch (IOException | TikaException  | SAXException e) {
             throw new PostProcessingException(e);
@@ -87,13 +116,11 @@ public class TextExtractor {
      * @param args
      */
     public static void main(String... args) {
-        // TODO Auto-generated method stub
         File file = new File("test.html");
-        logger.error("Running TextExtractor ");
         try {
             InputStream is = new FileInputStream(file);
             TextExtractor te = new TextExtractor();
-            String rtnValue = te.parseHTML(is);
+            Map<String, String> rtnValue = te.parseHTML(is);
             System.out.println(rtnValue);
         } catch (Exception e) {
            logger.error("Error "+ e); 

@@ -182,9 +182,12 @@ public class CollectorWebPageImpl extends CollectorHttp {
      */
     protected final void storeDocument() throws DocServiceException {
         if (storing) {
-            // Send to document store
+            // Assemble content and metadata
             String contentType = messageMetadata.get("contentType");
             DocumentObject doc = new DocumentObject(rawContent, contentType);
+            doc.setMetadata(documentMetadata);
+            
+            // Send to document store
             docServiceClient.store(doc, docId);
         }
     }
@@ -200,45 +203,34 @@ public class CollectorWebPageImpl extends CollectorHttp {
     
     /** Test driver used during development. */
     static public void main(String[] args) {
-        try {                
-//            String url = "http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-modified.xml";        // OK: HEAD conditional
-//            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
-//            String url = "http://seclists.org/rss/fulldisclosure.rss";                              // OK: HEAD conditional
-//            String url = "http://www.reddit.com/r/netsec/new.rss";                                  // FAIL: HEAD conditional or GET SHA-1, but 'ups', 'score', comments change ~10 seconds
-//            String url = "http://blog.cmpxchg8b.com/feeds/posts/default";                           // OK: HEAD Last-Modified
-//            String url = "https://technet.microsoft.com/en-us/security/rss/bulletin";               // FAIL: RSS item order changes every time
-//            String url = "http://metasploit.org/modules/";                                          // FAIL: 'csrf-token' changes every time
-//            String url = "http://community.rapid7.com/community/metasploit/blog";                   // FAIL: IDs change every time
-//            String url = "http://rss.packetstormsecurity.com/files/";                               // FAIL: 'utmn' changes every time
-//            String url = "http://www.f-secure.com/exclude/vdesc-xml/latest_50.rss";                 // OK: HEAD Last-Modified
-//            String url = "https://isc.sans.edu/rssfeed_full.xml";                                   // FAIL: HEAD Last-Modified, 'lastBuildDate' changes ~10 minutes
-//            String url = "https://twitter.com/briankrebs";                                          // FAIL: Authenticity tokens change
-//            String url = "http://www.mcafee.com/threat-intelligence/malware/latest.aspx";           // OK: GET SHA-1
-//            String url = "http://about-threats.trendmicro.com/us/threatencyclopedia#malware";       // FAIL: GET SHA-1, but '__VIEWSTATE' and '__EVENTVALIDATION' change
-//            String url = "https://cve.mitre.org/data/refs/refmap/source-BUGTRAQ.html";              // OK: GET SHA-1
-//            String url = "https://isc.sans.edu/feeds/daily_sources";                                // OK: HEAD Last-Modified
-            
-//            String url = "http://espn.go.com";  // FAIL: Timestamp and IDs changed
-//            String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
-//            String url = "http://www.malwaredomainlist.com/mdl.php?inactive=&sort=Date&search=&colsearch=All&ascordesc=DESC&quantity=10000&page=0";
-            String url = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2002.xml.gz";
-            
-            Config.setConfigFile(new File("../config/stucco.yml"));
-            Map<String, String> configData = new HashMap<String, String>();
-            configData.put("source-URI", url);
-            configData.put("post-process", "unzip");
-            CollectorHttp collector = new CollectorWebPageImpl(configData);
+//        String url = "http://static.nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-modified.xml";        // OK: HEAD conditional
+//        String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
+//        String url = "http://seclists.org/rss/fulldisclosure.rss";                              // OK: HEAD conditional
+//        String url = "http://www.reddit.com/r/netsec/new.rss";                                  // FAIL: HEAD conditional or GET SHA-1, but 'ups', 'score', comments change ~10 seconds
+//        String url = "http://blog.cmpxchg8b.com/feeds/posts/default";                           // OK: HEAD Last-Modified
+//        String url = "https://technet.microsoft.com/en-us/security/rss/bulletin";               // FAIL: RSS item order changes every time
+//        String url = "http://metasploit.org/modules/";                                          // FAIL: 'csrf-token' changes every time
+//        String url = "http://community.rapid7.com/community/metasploit/blog";                   // FAIL: IDs change every time
+//        String url = "http://rss.packetstormsecurity.com/files/";                               // FAIL: 'utmn' changes every time
+//        String url = "http://www.f-secure.com/exclude/vdesc-xml/latest_50.rss";                 // OK: HEAD Last-Modified
+//        String url = "https://isc.sans.edu/rssfeed_full.xml";                                   // FAIL: HEAD Last-Modified, 'lastBuildDate' changes ~10 minutes
+//        String url = "https://twitter.com/briankrebs";                                          // FAIL: Authenticity tokens change
+//        String url = "http://www.mcafee.com/threat-intelligence/malware/latest.aspx";           // OK: GET SHA-1
+//        String url = "http://about-threats.trendmicro.com/us/threatencyclopedia#malware";       // FAIL: GET SHA-1, but '__VIEWSTATE' and '__EVENTVALIDATION' change
+//        String url = "https://cve.mitre.org/data/refs/refmap/source-BUGTRAQ.html";              // OK: GET SHA-1
+//        String url = "https://isc.sans.edu/feeds/daily_sources";                                // OK: HEAD Last-Modified
+//        String url = "http://espn.go.com";  // FAIL: Timestamp and IDs changed
+//        String url = "http://geolite.maxmind.com/download/geoip/database/GeoIPCountryCSV.zip";  // OK: HEAD conditional
+//        String url = "http://www.malwaredomainlist.com/mdl.php?inactive=&sort=Date&search=&colsearch=All&ascordesc=DESC&quantity=10000&page=0";
+//        String url = "https://nvd.nist.gov/feeds/xml/cve/nvdcve-2.0-2002.xml.gz";
+        String url = "http://krebsonsecurity.com/2014/01/security-updates-for-windows-flash-reader/";
 
-            System.err.println("COLLECTION #1");
-            collector.collect();
-            
-            Thread.sleep(2000);
-            System.err.println("\nCOLLECTION #2");
-//            collector.collect();
-        }
-        catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Config.setConfigFile(new File("../config/stucco.yml"));
+        Map<String, String> configData = new HashMap<String, String>();
+        configData.put("source-URI", url);
+        configData.put("post-process", "removeHTML");
+        CollectorHttp collector = new CollectorWebPageImpl(configData);
+        collector.collect();
     }
     
 }
