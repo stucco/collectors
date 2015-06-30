@@ -16,6 +16,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
+import org.apache.tika.parser.html.BoilerpipeContentHandler;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -98,11 +99,17 @@ public class TextExtractor {
     public Map<String, String> parseHTML(InputStream is) throws PostProcessingException {
         Map<String, String> rtnValue = Collections.emptyMap();
         try {
-            ContentHandler contenthandler = new BodyContentHandler();
+            // Wrap regular handler with Boilerpipe handler
+            BoilerpipeContentHandler contentHandler = new BoilerpipeContentHandler(new BodyContentHandler());
+            
+            // Parse content and metadata
             Metadata metadata = new Metadata();
             Parser parser = new AutoDetectParser();
-            parser.parse(is, contenthandler, metadata, new ParseContext());
-            rtnValue = createMap(contenthandler.toString(), metadata);     
+            parser.parse(is, contentHandler, metadata, new ParseContext());
+            
+            // Bundle them
+            String content = contentHandler.getTextDocument().getText(true, false);
+            rtnValue = createMap(content, metadata);     
         }
         catch (IOException | TikaException  | SAXException e) {
             throw new PostProcessingException(e);
