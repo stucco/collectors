@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 /** 
  * Enumeration used to indicate whether our feed collecting should continue
  * or stop (with the reason for stopping).

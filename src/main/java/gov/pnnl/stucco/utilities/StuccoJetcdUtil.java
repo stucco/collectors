@@ -1,10 +1,13 @@
 package gov.pnnl.stucco.utilities;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+
+/** Utility class for converting key paths from absolute paths to local paths. */
 public class StuccoJetcdUtil {
 
     // Prevent instantiation

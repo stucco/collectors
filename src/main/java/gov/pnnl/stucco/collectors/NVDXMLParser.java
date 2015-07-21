@@ -31,15 +31,15 @@ import javax.xml.stream.XMLOutputFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
  * XML extractor of CVE records from NVD XML structure
  * uses the STaX processing approach with events to find entry we are looking for.
  * when we have found a record we fire an event to send those record on their way to those that need them.
- * @author shawn
- *
  */
 public class NVDXMLParser {
 
+    /** Factory for getting XML streams. */
     private XMLInputFactory mfactory = null;
     
     /** logging for this class */
@@ -167,7 +167,6 @@ public class NVDXMLParser {
     
     /**
      * Listeners that are interested in events fired by this class
-     * @param listener
      */
     public void addListener(NVDListener listener) {
         this.mEventListeners.add(listener);
@@ -187,7 +186,6 @@ public class NVDXMLParser {
     
     /**
      * Extract content starting with a filename rather than a stream
-     * @param filename
      */
     public void extract(String filename) {
         
@@ -215,7 +213,6 @@ public class NVDXMLParser {
     }
     
     /**
-     * @param args
      * @throws XMLStreamException
      */
     public static void main(String[] args) throws XMLStreamException {

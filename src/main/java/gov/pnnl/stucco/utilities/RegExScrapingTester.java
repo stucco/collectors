@@ -15,7 +15,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** 
- * Debug class for testing out a regex scraping of a web page. 
+ * Debug class for testing out a regex for scraping specific URLs from a web 
+ * page. This was originally motivated by the need to gather sub-URLs from
+ * RSS feeds using tabbed subpages. The intent is to test our regexes before
+ * using them in the schedule config.
  */
 public class RegExScrapingTester {
 

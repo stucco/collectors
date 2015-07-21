@@ -5,16 +5,15 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
+/** Factory class for creating specific collectors by type. */
 public class CollectorFactory {
     // get the instance of the global logger
     private static final Logger logger = LoggerFactory.getLogger(CollectorFactory.class);
     
-    // simple factory approach, will probably want to redo this as we include more collector types
-    /* 
+    /**
+     * Simple factory approach to creating collectors.
+     * 
      * @param configData  Configuration data specific to a given collector
      */
     public static Collector makeCollector(Map<String, String> configData) {

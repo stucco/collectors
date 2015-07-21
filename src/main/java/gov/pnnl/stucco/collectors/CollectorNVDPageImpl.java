@@ -1,8 +1,5 @@
 package gov.pnnl.stucco.collectors;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
 import gov.pnnl.stucco.utilities.Exit;
@@ -20,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+/** Collector that collects and parses NVD content. */
 public class CollectorNVDPageImpl extends CollectorWebPageImpl {    
     
     /** 
@@ -78,8 +76,6 @@ public class CollectorNVDPageImpl extends CollectorWebPageImpl {
      * processMultiRecord - after getting the primary (page or file) of all records
      * we pass the data off to the XMLextractor to do the heavy lifting and use events
      * as callbacks to process the individual records (i.e., sending them to RT and storing them)
-     * 
-     * @throws DocServiceException
      */
     private void processMultiRecords() {
         NVDXMLParser extractor = new NVDXMLParser();

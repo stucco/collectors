@@ -12,10 +12,11 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
+/** 
+ * Collector for treating each line of a file as a document. This was motivated
+ * by use on Hone files.
+ */
 public class CollectorFileByLineImpl extends CollectorFileBase {
     private static final Logger logger = LoggerFactory.getLogger(CollectorFileByLineImpl.class);
 

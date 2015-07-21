@@ -1,8 +1,5 @@
 package gov.pnnl.stucco.utilities;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 import gov.pnnl.stucco.collectors.Config;
 import gov.pnnl.stucco.doc_service_client.DocServiceClient;
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
@@ -64,6 +61,7 @@ public class FileReceiver {
         }
     }
 
+    /** Activates this FileReceiver to start pulling from the queue. */
     public void receive() {
         try {
             QueueingConsumer consumer = initConsumer();
@@ -75,6 +73,7 @@ public class FileReceiver {
         }
     }
 
+    /** Sets up the connection to the queue. */
     private QueueingConsumer initConsumer() throws IOException {
         // Create a connection with one channel
         ConnectionFactory factory = new ConnectionFactory();

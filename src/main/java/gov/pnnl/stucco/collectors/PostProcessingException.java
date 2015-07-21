@@ -1,9 +1,10 @@
 package gov.pnnl.stucco.collectors;
 
+
 /**
  * Exception type for collector post-processing.
- * @author d3e145
  */
+@SuppressWarnings("serial")
 public class PostProcessingException extends Exception {
 
     public PostProcessingException() {

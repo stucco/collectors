@@ -1,8 +1,5 @@
 package gov.pnnl.stucco.collectors;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 import gov.pnnl.stucco.doc_service_client.DocServiceClient;
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
 import gov.pnnl.stucco.utilities.Exit;
@@ -28,6 +25,7 @@ public class QueueSender {
     /** Configuration for RabbitMQ. */
     private Map<String, Object> rabbitMq;
 
+    /** Entry point to the document service. */
     private DocServiceClient docServiceClient = null;
 
     private int maxMessageSize;

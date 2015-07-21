@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -22,8 +23,6 @@ import java.util.TimeZone;
  * 
  * <p>Source: http://www.w3.org/Protocols/rfc2616/rfc2616-sec3.html 
  * (via Google search "http timestamp format").
- *  
- * @author Grant Nakamura, June 2014
  */
 public class TimestampConvert {
 

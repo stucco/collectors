@@ -1,6 +1,7 @@
 package gov.pnnl.stucco.collectors;
 
 
+
 import gov.pnnl.stucco.utilities.CommandLine;
 import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 import gov.pnnl.stucco.utilities.StuccoJetcdUtil;
@@ -20,8 +21,6 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * Class for YAML configuration file(s).
- * 
- * @author Shawn Bohn, Grant Nakamura; August 2013 
  */
 public class Config {
     private static final Logger logger = LoggerFactory.getLogger(Config.class);

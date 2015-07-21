@@ -1,8 +1,5 @@
 package gov.pnnl.stucco.collectors;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
 import gov.pnnl.stucco.doc_service_client.DocServiceException;
 import gov.pnnl.stucco.doc_service_client.DocumentObject;
@@ -20,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 
+/** Collector for getting a single web (HTTP or HTTPS) page. */
 public class CollectorWebPageImpl extends CollectorHttp {    
     
     /** Whether we will save the collected content to the document store. */

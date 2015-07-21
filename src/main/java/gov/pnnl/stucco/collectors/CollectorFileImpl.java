@@ -10,10 +10,8 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
+/** Collector that loads a local file. */
 public class CollectorFileImpl extends CollectorFileBase {
     private static final Logger logger = LoggerFactory.getLogger(CollectorFileImpl.class);
 

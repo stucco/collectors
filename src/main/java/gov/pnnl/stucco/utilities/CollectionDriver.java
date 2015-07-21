@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 import gov.pnnl.stucco.collectors.Config;
 import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 
@@ -11,8 +12,6 @@ import java.util.Map;
  * A single Java app for running either the CollectorScheduler or the Replayer.
  * Alternatively we could use a shell script for this, but we want to be able to
  * gracefully handle shutdown requests from supervisord.
- * 
- * @author Grant Nakamura, Feb 2015
  */
 public class CollectionDriver {
 

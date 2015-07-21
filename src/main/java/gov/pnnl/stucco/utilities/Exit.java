@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 /** 
  * Utility for exiting when a service isn't functioning correctly. In 
  * particular, we'll be calling this when we get exceptions from the document
@@ -10,8 +11,6 @@ package gov.pnnl.stucco.utilities;
  * as a central location for documenting why (supervisord) we are choosing to
  * exit instead of catch and proceed. It may also be convenient if we later 
  * evolve the exit strategy.
- * 
- * @author Grant Nakamura, April 2015
  */
 public class Exit {
 

@@ -1,9 +1,6 @@
 package gov.pnnl.stucco.collectors;
 
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
 import java.io.File;
 import java.util.HashMap;

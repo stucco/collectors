@@ -1,7 +1,4 @@
 package gov.pnnl.stucco.utilities;
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
 import gov.pnnl.stucco.collectors.Collector;
 import gov.pnnl.stucco.collectors.CollectorFactory;
@@ -9,7 +6,6 @@ import gov.pnnl.stucco.collectors.Config;
 import gov.pnnl.stucco.utilities.CommandLine.UsageException;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -18,8 +14,6 @@ import java.util.Map;
 /**
  * Replays the various feeds from previously saved exogenous and endogenous data
  * as specified in the configuration entries.
- * 
- * @author Shawn Bohn,  August 2013
  */
 public class Replayer {
     

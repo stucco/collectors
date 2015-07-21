@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 import static org.quartz.CronScheduleBuilder.cronSchedule;
 import static org.quartz.JobBuilder.newJob;
 import static org.quartz.TriggerBuilder.newTrigger;
@@ -27,10 +28,13 @@ import org.slf4j.LoggerFactory;
 /** 
  * Scheduler for Stucco collectors. Read cron specifications from a config map,
  * and schedules collection (using the Quartz library). 
- * 
- * @author Grant Nakamura, June 2014
  */
 public class CollectorScheduler {
+    
+    /** 
+     * Loads the jobs into the Quartz scheduler. Any given entry may be
+     * specified to run at startup and/or on a schedule.
+     */
     @SuppressWarnings({ "unchecked" })
     public void runSchedule(Map<String, Object> collectorsSectionConfig) {
         try {
@@ -41,6 +45,9 @@ public class CollectorScheduler {
             // Start up a scheduler, with no schedule yet
             Scheduler sched = StdSchedulerFactory.getDefaultScheduler();
             sched.start();
+            
+            // TODO: Currently, the collection is traversed in no particular order.
+            // We may want to provide the user the ability to control the order.
             
             for(Object obj : collectorConfigs) {
                 Map<String, Object> collectorConfig = (Map<String, Object>) obj;

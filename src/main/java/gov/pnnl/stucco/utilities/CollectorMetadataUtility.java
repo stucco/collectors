@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
@@ -113,6 +114,8 @@ public class CollectorMetadataUtility extends JFrame {
         gbc_refreshButton.anchor = GridBagConstraints.EAST;
         gbc_refreshButton.insets = new Insets(5, 0, 5, 5);
         
+        // TODO:
+        //
         // Commented out for now. 
         //
         // The intent was to be able to refresh while scheduler-controlled 

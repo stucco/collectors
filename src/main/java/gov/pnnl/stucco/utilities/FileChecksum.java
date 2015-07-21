@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -11,8 +12,6 @@ import java.security.NoSuchAlgorithmException;
 
 /** 
  * Utility for generating a checksum (such as MD5 or SHA-1) for a file.
- * 
- * @author Grant Nakamura, June 2014
  */
 public class FileChecksum {
 

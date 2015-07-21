@@ -16,9 +16,6 @@ import gov.pnnl.stucco.utilities.TextExtractor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
 /** Abstract base class used in implementing Collectors. */
 public abstract class CollectorAbstractBase implements Collector {
@@ -49,11 +46,13 @@ public abstract class CollectorAbstractBase implements Collector {
     /** time the data was collected */
     protected Date timestamp = null;
     
+    /** Thread count. (Not currently used.) */
     private int numberOfThreads = 1;
     
     /** Map of configuration data for the specific collector. */
     protected Map<String, String> collectorConfigData;
     
+    /** Uses Tika (with Boilerpipe). */
     protected TextExtractor textExtractor = new TextExtractor();
 
 
@@ -89,6 +88,7 @@ public abstract class CollectorAbstractBase implements Collector {
         messageSender.send(messageMetadata, rawContent);
     }
     
+    /** Sets the thread count. (Not currently used.) */
     public void setNumberOfThreads(int threadCount) {
         
         // we're only allow the number of threads to be between 1 and 8 (at this time)

@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -54,11 +55,7 @@ import java.util.Map;
  * }
  * </pre>
  *
- * <p> UnsupportedOperationExceptions are throw when the reads don't match the setup.
- *
- *
- * @author Grant Nakamura, February 2013
- *
+ * <p> UnsupportedOperationExceptions are thrown when the reads don't match the setup.
  */
 public final class CommandLine {
 

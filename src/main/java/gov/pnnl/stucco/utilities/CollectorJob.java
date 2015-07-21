@@ -1,12 +1,9 @@
 package gov.pnnl.stucco.utilities;
 
+
 import gov.pnnl.stucco.collectors.Collector;
 import gov.pnnl.stucco.collectors.CollectorFactory;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Formatter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -18,8 +15,6 @@ import org.quartz.JobExecutionException;
 /** 
  * Quartz Job that constructs and runs a Collector. The configuration for the 
  * collector is passed in the JobExecutionContext.
- * 
- * @author Grant Nakamura, June 2014
  */
 public class CollectorJob implements Job {
 

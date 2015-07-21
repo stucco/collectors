@@ -1,8 +1,5 @@
 package gov.pnnl.stucco.collectors;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
 /**
  * Collector interface to support the various collectors we will have to collect data from
@@ -12,7 +9,6 @@ public interface Collector {
     
     /**
      * How many threads should be running when collecting information from this source
-     * @param threadCount
      */
     public void setNumberOfThreads(final int threadCount);
     

@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 import gov.pnnl.stucco.collectors.PostProcessingException;
 import gov.pnnl.stucco.utilities.TextExtractor;
 
@@ -18,50 +19,16 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.BoilerpipeContentHandler;
 import org.apache.tika.sax.BodyContentHandler;
-import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-import org.json.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * TODO: add comments on class
- * @author d3e145
- *
+ * Class that encapsulates the use of Tika (with Boilerpipe) as a 
+ * post-collection operation. 
  */
 public class TextExtractor {
     private static final Logger logger = LoggerFactory.getLogger(TextExtractor.class);
-    
-    /**
-     * Combines the metadata and extracted text content into a JSON document
-     * The document uses the names as TIKA defines for the key value pairs in the metadata structure
-     * and this method add the "content" key and the value from the content.
-     * @param content - text extracted (or filtered) from the document
-     * @param metadata - A map of extracted metadata from the document (author, title, pubdate) as found in the document
-     * @return - as JSON document
-     */
-    private String createJSONObject(String content, Metadata metadata)
-    {
-        String jsonString = "";
-        String JSONCONTENT = "content";
-        
-        try{
-            JSONObject document = new JSONObject();
-            
-            document.put(JSONCONTENT, new String(content));
-            String[] names = metadata.names();
-            for (String name : names)
-            {
-                String[] value = metadata.getValues(name);
-                document.put(name, value);
-            }
-            jsonString = document.toString(4);
-
-        }catch(JSONException e){
-            logger.error("Error putting content from TIKA into JSON object: " + e);
-        }
-        return jsonString;
-    }
     
     /**
      * Puts the metadata and extracted text content into a Map.

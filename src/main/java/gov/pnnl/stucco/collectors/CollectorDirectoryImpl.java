@@ -1,12 +1,10 @@
 package gov.pnnl.stucco.collectors;
 
-/**
- * $OPEN_SOURCE_DISCLAIMER$
- */
 
 import java.io.File;
 import java.util.Map;
 
+/** Collector for getting files from a local directory. */
 public class CollectorDirectoryImpl extends CollectorAbstractBase {
         
     /** Directory to collect files from. */

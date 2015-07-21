@@ -1,5 +1,6 @@
 package gov.pnnl.stucco.utilities;
 
+
 import java.io.Serializable;
 import java.util.Date;
 
