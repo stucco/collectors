@@ -1,4 +1,7 @@
 language: java
+addons:
+  hostname: short-hostname
+#workaround for bug in openjdk7 environment.  see travis-ci issue 5227
 jdk:
   - oraclejdk7
   - openjdk7
