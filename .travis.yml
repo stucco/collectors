@@ -3,7 +3,6 @@ jdk:
   - oraclejdk7
   - openjdk7
   - oraclejdk8
-  - openjdk8
 before_install:
   - mvn --non-recursive scm:checkout -Dmodule.name=document-service-client-java
   - cd document-service-client-java
