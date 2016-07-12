@@ -87,6 +87,10 @@ Collectors used for test/debug, to "play back" previously-captured data:
 ##### source-uri #####
 The URI for a source.
 
+##### post-process #####
+The `post-process` configuration key is used to indicate what post-collection processing should be performed. For example, an unstructured html page would use the `removeHTML` value so that the document's raw text could be extracted. It would appear as follows:
+`post-process : removeHTML`
+
 ##### *-regex #####
 The collectors use regular expressions (specifically [Java regexes](https://www.google.com/?q=java+regex#q=java+regex)) to scrape additional links to traverse. There are currently keys for three kinds of links:
 
